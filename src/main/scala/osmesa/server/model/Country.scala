@@ -21,8 +21,8 @@ object Country {
         countries
     """
 
-  def byId(id: Int)(implicit xa: Transactor[IO]): ConnectionIO[Option[Country]] =
-    (selectF ++ fr"WHERE id == $id").query[Country].option
+  def byId(id: Int)(implicit xa: Transactor[IO]): fs2.Stream[ConnectionIO, Country] =
+    (selectF ++ fr"WHERE id == $id").query[Country].stream
 
 }
 

@@ -44,8 +44,8 @@ object Changeset {
         changesets
     """
 
-  def byId(id: Long)(implicit xa: Transactor[IO]): ConnectionIO[Option[Changeset]] =
-    (selectF ++ fr"WHERE id == $id").query[Changeset].option
+  def byId(id: Long)(implicit xa: Transactor[IO]): fs2.Stream[ConnectionIO, Changeset] =
+    (selectF ++ fr"WHERE id == $id").query[Changeset].stream
 
 }
 

@@ -21,8 +21,8 @@ object ChangesetCountry {
         changeset_countries
     """
 
-  def byId(countryId: Int, changesetId: Int)(implicit xa: Transactor[IO]): ConnectionIO[Option[ChangesetCountry]] =
-    (selectF ++ fr"WHERE changeset_id == $changesetId AND country_id == $countryId").query[ChangesetCountry].option
+  def byId(countryId: Int, changesetId: Int)(implicit xa: Transactor[IO]): fs2.Stream[ConnectionIO, ChangesetCountry] =
+    (selectF ++ fr"WHERE changeset_id == $changesetId AND country_id == $countryId").query[ChangesetCountry].stream
 
 }
 

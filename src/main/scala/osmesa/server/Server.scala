@@ -37,6 +37,14 @@ object Server extends StreamApp[IO] with Http4sDsl[IO] {
   val service: HttpService[IO] = HttpService[IO] {
     case GET -> Root =>
       Ok("testing - root")
+    case GET -> Root / "user" / IntVar(userId) =>
+      Ok(s"user - $userId")
+    case GET -> Root / "changeset" / IntVar(changesetId) =>
+      Ok(s"user - $changesetId")
+    case GET -> Root / "country" / IntVar(countryId) =>
+      Ok(s"user - $countryId")
+    case GET -> Root / "changeset-country" / IntVar(changesetId) / IntVar(countryId) =>
+      Ok(s"user - ${changesetId}-${countryId}")
   }
 
   def stream(args: List[String], requestShutdown: IO[Unit]): Stream[IO, ExitCode] =

@@ -20,8 +20,8 @@ object User {
         users
     """
 
-  def byId(id: Int)(implicit xa: Transactor[IO]): ConnectionIO[Option[User]] =
-    (selectF ++ fr"WHERE id == $id").query[User].option
+  def byId(id: Int)(implicit xa: Transactor[IO]): fs2.Stream[ConnectionIO,User] =
+    (selectF ++ fr"WHERE id == $id").query[User].stream
 
 }
 
