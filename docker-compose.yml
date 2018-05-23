@@ -1,0 +1,29 @@
+version: '3'
+services:
+  db:
+    image: quay.io/azavea/postgis:2.4-postgres10.3-slim
+    volumes:
+      - ./data/:/tmp/data/
+    expose:
+      - "5432"
+    environment:
+      POSTGRES_PASSWORD: "osm-stats"
+      POSTGRES_USER: "osm-stats"
+      POSTGRES_DB: "osm-stat-db"
+  osm-stat-server:
+    image: quay.io/azavea/osm-stat-server:latest
+    ports:
+      - "8080:8080"
+    links:
+      - "db:database"
+    build:
+      context: docker/osm-stat-server
+      dockerfile: Dockerfile
+    environment:
+      DB_DRIVER: "org.postgresql.Driver"
+      DB_URL: "jdbc:postgresql://db:5432/osm-stat-db"
+      DB_USER: "osm-stats"
+      DB_PASS: "osm-stats"
+    stdin_open: true
+    tty: true
+

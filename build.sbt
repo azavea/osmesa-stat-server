@@ -41,3 +41,4 @@ libraryDependencies ++= Seq(
 
 parallelExecution in Test := false
 
+assemblyJarName in assembly := "osm-stat-server.jar"
