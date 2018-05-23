@@ -28,19 +28,22 @@ class Router(trans: Transactor[IO]) extends Http4sDsl[IO] {
     case GET -> Root =>
       Ok("testing - root")
 
-    case GET -> Root / "user" / IntVar(userId) =>
+    case GET -> Root / "users" / IntVar(userId) =>
       Ok(Stream("[") ++ User.byId(userId).map(_.asJson.noSpaces).intersperse(",") ++ Stream("]"), `Content-Type`(MediaType.`application/json`))
 
-    case GET -> Root / "changeset" / LongVar(changesetId) =>
+    case GET -> Root / "changesets" / LongVar(changesetId) =>
       Ok(Stream("[") ++ Changeset.byId(changesetId).map(_.asJson.noSpaces).intersperse(",") ++ Stream("]"), `Content-Type`(MediaType.`application/json`))
 
-    case GET -> Root / "hashtag" / IntVar(hashtagId) =>
+    case GET -> Root / "hashtags" / IntVar(hashtagId) =>
       Ok(Stream("[") ++ Hashtag.byId(hashtagId).map(_.asJson.noSpaces).intersperse(",") ++ Stream("]"), `Content-Type`(MediaType.`application/json`))
 
-    case GET -> Root / "country" / IntVar(countryId) =>
+    case GET -> Root / "countries" =>
+      Ok(Stream("[") ++ Country.getAll.map(_.asJson.noSpaces).intersperse(",") ++ Stream("]"), `Content-Type`(MediaType.`application/json`))
+
+    case GET -> Root / "countries" / IntVar(countryId) =>
       Ok(Stream("[") ++ Country.byId(countryId).map(_.asJson.noSpaces).intersperse(",") ++ Stream("]"), `Content-Type`(MediaType.`application/json`))
 
-    case GET -> Root / "changeset-country" / IntVar(changesetId) / IntVar(countryId) =>
+    case GET -> Root / "changesets-countries" / IntVar(changesetId) / IntVar(countryId) =>
       Ok(Stream("[") ++ ChangesetCountry.byId(changesetId, countryId).map(_.asJson.noSpaces).intersperse(",") ++ Stream("]"), `Content-Type`(MediaType.`application/json`))
   }
 }

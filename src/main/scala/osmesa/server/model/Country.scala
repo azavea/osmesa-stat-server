@@ -32,5 +32,8 @@ object Country {
       .stream
       .transact(xa)
 
+  def getAll(implicit xa: Transactor[IO]): fs2.Stream[IO, Country] =
+    selectF.query[Country].stream.transact(xa)
+
 }
 
