@@ -10,6 +10,6 @@ docker/osm-stat-server/osm-stat-server.jar:
 build: docker/osm-stat-server/osm-stat-server.jar
 	docker-compose build
 
-serve:
+serve: build
 	docker-compose up
 

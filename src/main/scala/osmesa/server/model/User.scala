@@ -26,7 +26,7 @@ object User {
     """
 
   def byId(id: Int)(implicit xa: Transactor[IO]): fs2.Stream[IO, User] =
-    (selectF ++ fr"WHERE id == $id")
+    (selectF ++ fr"WHERE id = $id")
       .query[User]
       .stream
       .transact(xa)

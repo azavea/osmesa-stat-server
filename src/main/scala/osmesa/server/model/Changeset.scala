@@ -51,7 +51,7 @@ object Changeset {
     """
 
   def byId(id: Long)(implicit xa: Transactor[IO]): fs2.Stream[IO, Changeset] =
-    (selectF ++ fr"WHERE id == $id")
+    (selectF ++ fr"WHERE id = $id")
       .query[Changeset]
       .stream
       .transact(xa)

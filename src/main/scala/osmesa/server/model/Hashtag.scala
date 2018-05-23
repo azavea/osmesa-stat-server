@@ -26,7 +26,7 @@ object Hashtag {
     """
 
   def byId(id: Int)(implicit xa: Transactor[IO]): fs2.Stream[IO, Hashtag] =
-    (selectF ++ fr"WHERE id == $id")
+    (selectF ++ fr"WHERE id = $id")
       .query[Hashtag]
       .stream
       .transact(xa)

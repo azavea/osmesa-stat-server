@@ -27,7 +27,7 @@ object Country {
     """
 
   def byId(id: Int)(implicit xa: Transactor[IO]): fs2.Stream[IO, Country] =
-    (selectF ++ fr"WHERE id == $id")
+    (selectF ++ fr"WHERE id = $id")
       .query[Country]
       .stream
       .transact(xa)

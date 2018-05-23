@@ -7,9 +7,9 @@ services:
     expose:
       - "5432"
     environment:
-      POSTGRES_PASSWORD: "osm-stats"
-      POSTGRES_USER: "osm-stats"
-      POSTGRES_DB: "osm-stat-db"
+      POSTGRES_PASSWORD: "osm"
+      POSTGRES_USER: "osm"
+      POSTGRES_DB: "osm-stats"
   osm-stat-server:
     image: quay.io/azavea/osm-stat-server:latest
     ports:
@@ -21,9 +21,9 @@ services:
       dockerfile: Dockerfile
     environment:
       DB_DRIVER: "org.postgresql.Driver"
-      DB_URL: "jdbc:postgresql://db:5432/osm-stat-db"
-      DB_USER: "osm-stats"
-      DB_PASS: "osm-stats"
+      DB_URL: "jdbc:postgresql://db:5432/osm-stats"
+      DB_USER: "osm"
+      DB_PASS: "osm"
     stdin_open: true
     tty: true
 

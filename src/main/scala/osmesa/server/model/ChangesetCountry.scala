@@ -27,7 +27,7 @@ object ChangesetCountry {
     """
 
   def byId(changesetId: Int, countryId: Int)(implicit xa: Transactor[IO]): fs2.Stream[IO, ChangesetCountry] =
-    (selectF ++ fr"WHERE changeset_id == $changesetId AND country_id == $countryId")
+    (selectF ++ fr"WHERE changeset_id = $changesetId AND country_id == $countryId")
       .query[ChangesetCountry]
       .stream
       .transact(xa)
