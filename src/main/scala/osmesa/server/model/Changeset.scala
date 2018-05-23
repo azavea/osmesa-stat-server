@@ -5,6 +5,9 @@ import doobie.implicits._
 import doobie.postgres._
 import doobie.postgres.implicits._
 import cats.effect._
+import io.circe._
+import io.circe.generic.semiauto._
+import io.circe.java8.time._
 
 import java.time.LocalDate
 
@@ -34,6 +37,9 @@ case class Changeset(
 
 object Changeset {
 
+  implicit val changesetDecoder: Decoder[Changeset] = deriveDecoder
+  implicit val changesetEncoder: Encoder[Changeset] = deriveEncoder
+
   private val selectF = fr"""
       SELECT
         id, road_km_added, road_km_modified, waterway_km_added, waterway_km_modified,
@@ -44,8 +50,11 @@ object Changeset {
         changesets
     """
 
-  def byId(id: Long)(implicit xa: Transactor[IO]): fs2.Stream[ConnectionIO, Changeset] =
-    (selectF ++ fr"WHERE id == $id").query[Changeset].stream
+  def byId(id: Long)(implicit xa: Transactor[IO]): fs2.Stream[IO, Changeset] =
+    (selectF ++ fr"WHERE id == $id")
+      .query[Changeset]
+      .stream
+      .transact(xa)
 
 }
 

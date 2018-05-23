@@ -3,6 +3,8 @@ package osmesa.server.model
 import doobie._
 import doobie.implicits._
 import cats.effect._
+import io.circe._
+import io.circe.generic.semiauto._
 
 
 case class Country(
@@ -14,6 +16,9 @@ case class Country(
 
 object Country {
 
+  implicit val countryDecoder: Decoder[Country] = deriveDecoder
+  implicit val countryEncoder: Encoder[Country] = deriveEncoder
+
   private val selectF = fr"""
       SELECT
         id, name, code
@@ -21,8 +26,11 @@ object Country {
         countries
     """
 
-  def byId(id: Int)(implicit xa: Transactor[IO]): fs2.Stream[ConnectionIO, Country] =
-    (selectF ++ fr"WHERE id == $id").query[Country].stream
+  def byId(id: Int)(implicit xa: Transactor[IO]): fs2.Stream[IO, Country] =
+    (selectF ++ fr"WHERE id == $id")
+      .query[Country]
+      .stream
+      .transact(xa)
 
 }
 
