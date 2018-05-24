@@ -23,14 +23,20 @@ object ChangesetCountry {
       SELECT
         changeset_id, country_id, edit_count
       FROM
-        changeset_countries
+        changesets_countries
     """
 
-  def byId(changesetId: Int, countryId: Int)(implicit xa: Transactor[IO]): fs2.Stream[IO, ChangesetCountry] =
+  def byId(changesetId: Int, countryId: Int)(implicit xa: Transactor[IO]): IO[Either[OsmStatError, ChangesetCountry]] =
     (selectF ++ fr"WHERE changeset_id = $changesetId AND country_id == $countryId")
       .query[ChangesetCountry]
-      .stream
+      .option
       .transact(xa)
+      .map {
+        case Some(changesetCountry) => Right(changesetCountry)
+        case None => Left(IdNotFoundError("changesetCountry", (changesetId, countryId)))
+      }
 
+  def getAll(implicit xa: Transactor[IO]): fs2.Stream[IO, ChangesetCountry] =
+    selectF.query[ChangesetCountry].stream.transact(xa)
 }
 

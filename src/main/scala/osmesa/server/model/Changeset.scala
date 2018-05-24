@@ -50,11 +50,18 @@ object Changeset {
         changesets
     """
 
-  def byId(id: Long)(implicit xa: Transactor[IO]): fs2.Stream[IO, Changeset] =
+  def byId(id: Long)(implicit xa: Transactor[IO]): IO[Either[OsmStatError, Changeset]] =
     (selectF ++ fr"WHERE id = $id")
       .query[Changeset]
-      .stream
+      .option
       .transact(xa)
+      .map {
+        case Some(changeset) => Right(changeset)
+        case None => Left(IdNotFoundError("changeset", id))
+      }
+
+  def getAll(implicit xa: Transactor[IO]): fs2.Stream[IO, Changeset] =
+    selectF.query[Changeset].stream.transact(xa)
 
 }
 

@@ -25,11 +25,17 @@ object Hashtag {
         hashtags
     """
 
-  def byId(id: Int)(implicit xa: Transactor[IO]): fs2.Stream[IO, Hashtag] =
+  def byId(id: Int)(implicit xa: Transactor[IO]): IO[Either[OsmStatError, Hashtag]] =
     (selectF ++ fr"WHERE id = $id")
       .query[Hashtag]
-      .stream
+      .option
       .transact(xa)
+      .map {
+        case Some(country) => Right(country)
+        case None => Left(IdNotFoundError("hashtag", id))
+      }
 
+  def getAll(implicit xa: Transactor[IO]): fs2.Stream[IO, Hashtag] =
+    selectF.query[Hashtag].stream.transact(xa)
 }
 

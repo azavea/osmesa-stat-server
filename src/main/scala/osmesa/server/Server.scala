@@ -30,8 +30,6 @@ object Server extends StreamApp[IO] {
   )
 
   private val middleware: HttpMiddleware[IO] = { (routes: HttpService[IO]) =>
-    GZip(routes)
-  }.compose { (routes: HttpService[IO]) =>
     CORS(routes)
   }
 
@@ -39,7 +37,7 @@ object Server extends StreamApp[IO] {
     for {
       config <- Stream.eval(Config.load())
       transactor <- Stream.eval(Database.transactor(config.database))
-      _ <- Stream.eval(Database.initialize(transactor))
+      //_ <- Stream.eval(Database.initialize(transactor))
       service = middleware(new Router(transactor).routes)
       exitCode   <- BlazeBuilder[IO]
         .enableHttp2(true)

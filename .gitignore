@@ -27,3 +27,5 @@ _SUCCESS
 *.swo
 *.sublime-*
 .vagrant
+
+data/*

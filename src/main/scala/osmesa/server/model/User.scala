@@ -25,11 +25,18 @@ object User {
         users
     """
 
-  def byId(id: Int)(implicit xa: Transactor[IO]): fs2.Stream[IO, User] =
+  def byId(id: Int)(implicit xa: Transactor[IO]): IO[Either[OsmStatError, User]] =
     (selectF ++ fr"WHERE id = $id")
       .query[User]
-      .stream
+      .option
       .transact(xa)
+      .map {
+        case Some(user) => Right(user)
+        case None => Left(IdNotFoundError("user", id))
+      }
+
+  def getAll(implicit xa: Transactor[IO]): fs2.Stream[IO, User] =
+    selectF.query[User].stream.transact(xa)
 
 }
 

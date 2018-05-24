@@ -3,13 +3,14 @@ services:
   db:
     image: quay.io/azavea/postgis:2.4-postgres10.3-slim
     volumes:
-      - ./data/:/tmp/data/
+      - ./data/:/opt/data/
     expose:
       - "5432"
     environment:
-      POSTGRES_PASSWORD: "osm"
-      POSTGRES_USER: "osm"
+      POSTGRES_PASSWORD: "seth"
+      POSTGRES_USER: "seth"
       POSTGRES_DB: "osm-stats"
+      PGDATA: "/opt/data"
   osm-stat-server:
     image: quay.io/azavea/osm-stat-server:latest
     ports:
@@ -22,8 +23,8 @@ services:
     environment:
       DB_DRIVER: "org.postgresql.Driver"
       DB_URL: "jdbc:postgresql://db:5432/osm-stats"
-      DB_USER: "osm"
-      DB_PASS: "osm"
+      DB_USER: "seth"
+      DB_PASS: "seth"
     stdin_open: true
     tty: true
 

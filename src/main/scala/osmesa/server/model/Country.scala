@@ -26,11 +26,15 @@ object Country {
         countries
     """
 
-  def byId(id: Int)(implicit xa: Transactor[IO]): fs2.Stream[IO, Country] =
+  def byId(id: Int)(implicit xa: Transactor[IO]): IO[Either[OsmStatError, Country]] =
     (selectF ++ fr"WHERE id = $id")
       .query[Country]
-      .stream
+      .option
       .transact(xa)
+      .map {
+        case Some(country) => Right(country)
+        case None => Left(IdNotFoundError("country", id))
+      }
 
   def getAll(implicit xa: Transactor[IO]): fs2.Stream[IO, Country] =
     selectF.query[Country].stream.transact(xa)

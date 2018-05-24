@@ -1,6 +1,7 @@
 
 clean:
 	rm -rf docker/osm-stat-server/osm-stat-server.jar
+	rm -rf target
 	docker-compose down
 
 docker/osm-stat-server/osm-stat-server.jar:
