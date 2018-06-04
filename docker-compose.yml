@@ -14,7 +14,7 @@ services:
       POSTGRES_DB: "osm-stats"
       PGDATA: "/opt/data"
   osm-stat-server:
-    image: quay.io/azavea/osm-stat-server:latest
+    image: quay.io/geotrellis/osm-stat-server:latest
     ports:
       - "8080:8080"
     links:

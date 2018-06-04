@@ -44,8 +44,9 @@ class OsmesaRouter(trans: Transactor[IO]) extends Http4sDsl[IO] {
         user <- eitherResult(io)
       } yield user
 
-    case GET -> Root / "changesets" =>
-      Ok(Stream("[") ++ Changeset.getAll.map(_.asJson.noSpaces).intersperse(",") ++ Stream("]"), `Content-Type`(MediaType.`application/json`))
+    // Too many results. The data will get where it needs to go (streamed, chunked response) but the client might well crash
+    //case GET -> Root / "changesets" =>
+    //  Ok(Stream("[") ++ Changeset.getAll.map(_.asJson.noSpaces).intersperse(",") ++ Stream("]"), `Content-Type`(MediaType.`application/json`))
 
     case GET -> Root / "changesets" / LongVar(changesetId) =>
       for {
