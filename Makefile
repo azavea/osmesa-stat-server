@@ -17,4 +17,5 @@ serve: build
 
 publish: build
 	docker tag quay.io/geotrellis/osm-stat-server:latest quay.io/geotrellis/osm-stat-server:${VERSION}
+	docker push quay.io/geotrellis/osm-stat-server:latest
 	docker push quay.io/geotrellis/osm-stat-server:${VERSION}
