@@ -31,12 +31,15 @@ class OsmesaRouter(trans: Transactor[IO]) extends Http4sDsl[IO] {
 
   implicit val xa: Transactor[IO] = trans
 
+  object OptionalPageQueryParamMatcher extends OptionalQueryParamDecoderMatcher[Int]("page")
+
+
   def routes: HttpService[IO] = HttpService[IO] {
     case GET -> Root =>
       Ok("hello world")
 
-    case GET -> Root / "users" =>
-      Ok(Stream("[") ++ User.getAll.map(_.asJson.noSpaces).intersperse(",") ++ Stream("]"), `Content-Type`(MediaType.`application/json`))
+    case GET -> Root / "users" :? OptionalPageQueryParamMatcher(pageNum) =>
+      Ok(User.getPage(pageNum.getOrElse(0)).map(_.asJson))
 
     case GET -> Root / "users" / IntVar(userId) =>
       for {
@@ -45,8 +48,8 @@ class OsmesaRouter(trans: Transactor[IO]) extends Http4sDsl[IO] {
       } yield user
 
     // Too many results. The data will get where it needs to go (streamed, chunked response) but the client might well crash
-    //case GET -> Root / "changesets" =>
-    //  Ok(Stream("[") ++ Changeset.getAll.map(_.asJson.noSpaces).intersperse(",") ++ Stream("]"), `Content-Type`(MediaType.`application/json`))
+    case GET -> Root / "changesets" :? OptionalPageQueryParamMatcher(pageNum) =>
+      Ok(Changeset.getPage(pageNum.getOrElse(0)).map(_.asJson))
 
     case GET -> Root / "changesets" / LongVar(changesetId) =>
       for {
@@ -54,8 +57,8 @@ class OsmesaRouter(trans: Transactor[IO]) extends Http4sDsl[IO] {
         changeset <- eitherResult(io)
       } yield changeset
 
-    case GET -> Root / "hashtags" =>
-      Ok(Stream("[") ++ Hashtag.getAll.map(_.asJson.noSpaces).intersperse(",") ++ Stream("]"), `Content-Type`(MediaType.`application/json`))
+    case GET -> Root / "hashtags" :? OptionalPageQueryParamMatcher(pageNum) =>
+      Ok(Hashtag.getPage(pageNum.getOrElse(0)).map(_.asJson))
 
     case GET -> Root / "hashtags" / IntVar(hashtagId) =>
       for {
@@ -63,8 +66,8 @@ class OsmesaRouter(trans: Transactor[IO]) extends Http4sDsl[IO] {
         hashtag <- eitherResult(io)
       } yield hashtag
 
-    case GET -> Root / "countries" =>
-      Ok(Stream("[") ++ Country.getAll.map(_.asJson.noSpaces).intersperse(",") ++ Stream("]"), `Content-Type`(MediaType.`application/json`))
+    case GET -> Root / "countries" :? OptionalPageQueryParamMatcher(pageNum) =>
+      Ok(Country.getPage(pageNum.getOrElse(0)).map(_.asJson))
 
     case GET -> Root / "countries" / IntVar(countryId) =>
       for {
@@ -72,8 +75,8 @@ class OsmesaRouter(trans: Transactor[IO]) extends Http4sDsl[IO] {
         country <- eitherResult(io)
       } yield country
 
-    case GET -> Root / "changesets-countries" =>
-      Ok(Stream("[") ++ ChangesetCountry.getAll.map(_.asJson.noSpaces).intersperse(",") ++ Stream("]"), `Content-Type`(MediaType.`application/json`))
+    case GET -> Root / "changesets-countries" :? OptionalPageQueryParamMatcher(pageNum) =>
+      Ok(ChangesetCountry.getPage(pageNum.getOrElse(0)).map(_.asJson))
 
     case GET -> Root / "changesets-countries" / IntVar(changesetId) / IntVar(countryId) =>
       for {

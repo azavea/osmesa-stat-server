@@ -35,8 +35,13 @@ object User {
         case None => Left(IdNotFoundError("user", id))
       }
 
-  def getAll(implicit xa: Transactor[IO]): fs2.Stream[IO, User] =
-    selectF.query[User].stream.transact(xa)
-
+  def getPage(pageNum: Int)(implicit xa: Transactor[IO]): IO[ResultPage[User]] = {
+    val offset = pageNum * 10 + 1
+    (selectF ++ fr"ORDER BY id ASC LIMIT 10 OFFSET $offset")
+      .query[User]
+      .to[List]
+      .map({ ResultPage(_, pageNum) })
+      .transact(xa)
+  }
 }
 

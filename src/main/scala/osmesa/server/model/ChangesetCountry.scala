@@ -36,7 +36,13 @@ object ChangesetCountry {
         case None => Left(IdNotFoundError("changesetCountry", (changesetId, countryId)))
       }
 
-  def getAll(implicit xa: Transactor[IO]): fs2.Stream[IO, ChangesetCountry] =
-    selectF.query[ChangesetCountry].stream.transact(xa)
+  def getPage(pageNum: Int)(implicit xa: Transactor[IO]): IO[ResultPage[ChangesetCountry]] = {
+    val offset = pageNum * 10 + 1
+    (selectF ++ fr"ORDER BY changesetId ASC, countryId ASC LIMIT 10 OFFSET $offset")
+      .query[ChangesetCountry]
+      .to[List]
+      .map({ ResultPage(_, pageNum) })
+      .transact(xa)
+  }
 }
 
