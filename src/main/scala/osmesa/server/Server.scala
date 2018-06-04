@@ -38,7 +38,7 @@ object Server extends StreamApp[IO] {
       config <- Stream.eval(Config.load())
       transactor <- Stream.eval(Database.transactor(config.database))
       //_ <- Stream.eval(Database.initialize(transactor))
-      service = middleware(new Router(transactor).routes)
+      service = middleware(new OsmesaRouter(transactor).routes)
       exitCode   <- BlazeBuilder[IO]
         .enableHttp2(true)
         .bindHttp(config.server.port, config.server.host)

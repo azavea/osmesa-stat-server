@@ -4,6 +4,8 @@ services:
     image: quay.io/azavea/postgis:2.4-postgres10.3-slim
     volumes:
       - ./data/:/opt/data/
+    ports:
+      - "5432:5432"
     expose:
       - "5432"
     environment:

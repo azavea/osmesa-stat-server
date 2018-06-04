@@ -6,6 +6,8 @@ import cats.effect._
 import io.circe._
 import io.circe.generic.semiauto._
 
+import scala.concurrent.Future
+
 
 case class Hashtag(
   id: Int,

@@ -14,24 +14,24 @@ import java.time.LocalDate
 
 case class Changeset(
   id: Long,
-  roadKmAdded: Double,
-  roadKmModified: Double,
-  waterwayKmAdded: Double,
-  waterwayKmModified: Double,
-  roadsAdded: Int,
-  roadsModified: Int,
-  waterwaysAdded: Int,
-  waterwaysModified: Int,
-  buildingsAdded: Int,
-  buildingsModified: Int,
-  poisAdded: Int,
-  poisModified: Int,
-  editor: String,
-  userId: Int,
-  createdAt: LocalDate,
-  closedAt: LocalDate,
-  augmentedDiffs: Array[Int],
-  updatedAt: LocalDate
+  roadKmAdded: Option[Double],
+  roadKmModified: Option[Double],
+  waterwayKmAdded: Option[Double],
+  waterwayKmModified: Option[Double],
+  roadsAdded: Option[Int],
+  roadsModified: Option[Int],
+  waterwaysAdded: Option[Int],
+  waterwaysModified: Option[Int],
+  buildingsAdded: Option[Int],
+  buildingsModified: Option[Int],
+  poisAdded: Option[Int],
+  poisModified: Option[Int],
+  editor: Option[String],
+  userId: Option[Int],
+  createdAt: Option[LocalDate],
+  closedAt: Option[LocalDate],
+  augmentedDiffs: Option[Array[Int]],
+  updatedAt: Option[LocalDate]
 )
 
 

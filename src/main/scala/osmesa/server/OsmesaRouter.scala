@@ -20,7 +20,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
 
-class Router(trans: Transactor[IO]) extends Http4sDsl[IO] {
+class OsmesaRouter(trans: Transactor[IO]) extends Http4sDsl[IO] {
 
   private def eitherResult[Result: Encoder](result: Either[OsmStatError, Result]) = {
     result match {
@@ -55,7 +55,6 @@ class Router(trans: Transactor[IO]) extends Http4sDsl[IO] {
 
     case GET -> Root / "hashtags" =>
       Ok(Stream("[") ++ Hashtag.getAll.map(_.asJson.noSpaces).intersperse(",") ++ Stream("]"), `Content-Type`(MediaType.`application/json`))
-
 
     case GET -> Root / "hashtags" / IntVar(hashtagId) =>
       for {

@@ -9,7 +9,7 @@ import io.circe.generic.semiauto._
 
 case class User(
   id: Int,
-  name: String
+  name: Option[String]
 )
 
 
