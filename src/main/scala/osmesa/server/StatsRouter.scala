@@ -20,7 +20,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
 
-class OsmesaRouter(trans: Transactor[IO]) extends Http4sDsl[IO] {
+class StatsRouter(trans: Transactor[IO]) extends Http4sDsl[IO] {
 
   private def eitherResult[Result: Encoder](result: Either[OsmStatError, Result]) = {
     result match {
