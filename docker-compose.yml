@@ -9,12 +9,14 @@ services:
     expose:
       - "5432"
     environment:
-      POSTGRES_PASSWORD: "seth"
-      POSTGRES_USER: "seth"
+      POSTGRES_PASSWORD: "osm"
+      POSTGRES_USER: "osm"
       POSTGRES_DB: "osm-stats"
       PGDATA: "/opt/data"
   osm-stat-server:
     image: quay.io/geotrellis/osm-stat-server:latest
+    volumes:
+      - ~/.aws:/root/.aws
     ports:
       - "8080:8080"
     links:
@@ -25,8 +27,12 @@ services:
     environment:
       DB_DRIVER: "org.postgresql.Driver"
       DB_URL: "jdbc:postgresql://db:5432/osm-stats"
-      DB_USER: "seth"
-      DB_PASS: "seth"
+      DB_USER: "osm"
+      DB_PASS: "osm"
+      TILE_BUCKET: "geotrellis-test"
+      TILE_PREFIX: "npz"
+      TILE_SUFFIX: ".png"
+      TILE_CHUNK_SIZE: 4096
     stdin_open: true
     tty: true
 

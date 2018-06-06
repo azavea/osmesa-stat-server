@@ -5,13 +5,13 @@ import com.typesafe.config.ConfigFactory
 import pureconfig.error.ConfigReaderException
 
 
-case class Config(server: Config.Server, database: Config.Database)
+case class Config(server: Config.Server, database: Config.Database, tiles: Config.Tiles)
 
 
 object Config {
   case class Database(driver: String, url: String, user: String, password: String)
   case class Server(host: String, port: Int)
-  case class Tiles(s3bucket: String, s3prefix: String, chunkSize: Int)
+  case class Tiles(s3bucket: String, s3prefix: String, s3suffix: Option[String], chunkSize: Int)
 
   import pureconfig._
 

@@ -15,28 +15,31 @@ import org.http4s.server.blaze.BlazeBuilder
 import org.http4s.server.HttpMiddleware
 import org.http4s.server.middleware.{GZip, CORS, CORSConfig}
 import org.http4s.headers.{Location, `Content-Type`}
-import blobstore.Store,
+import blobstore.{Path => BStorePath}
+import blobstore.Store
 import blobstore.s3.S3Store
 import com.amazonaws.services.s3.AmazonS3ClientBuilder
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
+import scala.util._
 
 
-class TileRouter(trans: Transactor[IO], tileConf: Config.Tiles) extends Http4sDsl[IO] {
+class TileRouter(tileConf: Config.Tiles) extends Http4sDsl[IO] {
 
-  implicit val xa: Transactor[IO] = trans
+  private val s3client = AmazonS3ClientBuilder.standard().withRegion("us-east-1").build()
+  private val store: Store[IO] = S3Store[IO](s3client)
 
-  private val store: Store[IO] = S3Store[IO](AmazonS3ClientBuilder.standard().build())
-
-  val bucket = tileConf.s3bucket
-  val prefix = tileConf.s3prefix
+  def tilePath(pre: String, z: Int, x: Int, y: Int) = {
+    BStorePath(tileConf.s3bucket, s"${pre}/${z}/${x}/${y}${tileConf.s3suffix.getOrElse("")}", None, false, None)
+  }
 
   def routes: HttpService[IO] = HttpService[IO] {
     case GET -> Root / "user" / userId / IntVar(z) / IntVar(x) / IntVar(y) =>
-      Ok()
+      val stream = store.get(tilePath(s"${tileConf.s3prefix}/user/${userId}", z, x, y), tileConf.chunkSize)
+      Ok(stream)
 
-    case GET -> Root / "user" / hashtag / IntVar(z) / IntVar(x) / IntVar(y) =>
-      Ok()
+    case GET -> Root / "hashtag" / hashtag / IntVar(z) / IntVar(x) / IntVar(y) =>
+      Ok(store.get(tilePath(s"${tileConf.s3prefix}/hashtag/${hashtag}", z, x, y), tileConf.chunkSize))
   }
 }

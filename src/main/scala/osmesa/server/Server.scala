@@ -39,7 +39,7 @@ object Server extends StreamApp[IO] {
       transactor <- Stream.eval(Database.transactor(config.database))
       //_        <- Stream.eval(Database.initialize(transactor))
       stats = middleware(new StatsRouter(transactor).routes)
-      tiles = middleware(new TileRouter(transactor).routes)
+      tiles = middleware(new TileRouter(config.tiles).routes)
       exitCode   <- BlazeBuilder[IO]
         .enableHttp2(true)
         .bindHttp(config.server.port, config.server.host)

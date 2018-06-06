@@ -17,10 +17,10 @@ scalacOptions ++= Seq(
   "-language:existentials",
   "-feature"
 )
-
-externalResolvers := Seq(
+externalResolvers ++= Seq(
  "locationtech-releases" at "https://repo.locationtech.org/content/groups/releases",
- "locationtech-snapshots" at "https://repo.locationtech.org/content/groups/snapshots"
+ "locationtech-snapshots" at "https://repo.locationtech.org/content/groups/snapshots",
+ Resolver.file("localBackup", file(Path.userHome.absolutePath + "/.ivy2/local"))(Resolver.ivyStylePatterns)
 )
 
 val Http4sVer = "0.18.11"
@@ -28,8 +28,9 @@ val DoobieVer = "0.5.3"
 val CirceVer = "0.10.0-M1"
 val ScalaTestVer = "3.0.5"
 val GeotrellisVer = "2.0.0-RC1"
-val fs2BlobstoreVer = "0.1.6"
+val fs2BlobstoreVer = "0.1.0-SNAPSHOT"
 libraryDependencies ++= Seq(
+  "com.amazonaws" % "aws-java-sdk-s3" % "1.11.283",
   "org.http4s"    %% "http4s-blaze-server" % Http4sVer,
   "org.http4s"    %% "http4s-dsl"          % Http4sVer,
   "org.http4s"    %% "http4s-circe"        % Http4sVer,
