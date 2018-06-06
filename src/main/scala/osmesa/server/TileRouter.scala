@@ -29,6 +29,7 @@ class TileRouter(tileConf: Config.Tiles) extends Http4sDsl[IO] {
 
   private val s3client = AmazonS3ClientBuilder.standard().withRegion("us-east-1").build()
   private val store: Store[IO] = S3Store[IO](s3client)
+  private val vtileContentType = `Content-Type`(("application", "vnd.mapbox-vector-tile"))
 
   def tilePath(pre: String, z: Int, x: Int, y: Int) = {
     BStorePath(tileConf.s3bucket, s"${pre}/${z}/${x}/${y}${tileConf.s3suffix.getOrElse("")}", None, false, None)
@@ -37,9 +38,10 @@ class TileRouter(tileConf: Config.Tiles) extends Http4sDsl[IO] {
   def routes: HttpService[IO] = HttpService[IO] {
     case GET -> Root / "user" / userId / IntVar(z) / IntVar(x) / IntVar(y) =>
       val stream = store.get(tilePath(s"${tileConf.s3prefix}/user/${userId}", z, x, y), tileConf.chunkSize)
-      Ok(stream)
+      Ok(stream).map { _.withContentType(vtileContentType) }
 
     case GET -> Root / "hashtag" / hashtag / IntVar(z) / IntVar(x) / IntVar(y) =>
-      Ok(store.get(tilePath(s"${tileConf.s3prefix}/hashtag/${hashtag}", z, x, y), tileConf.chunkSize))
+      val stream = store.get(tilePath(s"${tileConf.s3prefix}/hashtag/${hashtag}", z, x, y), tileConf.chunkSize)
+      Ok(stream).map { _.withContentType(vtileContentType) }
   }
 }
