@@ -42,13 +42,19 @@ class TileRouter(tileConf: Config.Tiles) extends Http4sDsl[IO] {
 
   def routes: HttpService[IO] = HttpService[IO] {
     case GET -> Root / "user" / userId / IntVar(z) / IntVar(x) / IntVar(y) =>
-      val stream = store.get(tilePath(s"${tileConf.s3prefix}/user/${userId}", z, x, y), tileConf.chunkSize)
-      val response = (try Ok(stream) catch { case e: Exception => Ok(emptyVT.toBytes) })
+      val bytes = store
+        .get(tilePath(s"${tileConf.s3prefix}/user/${userId}", z, x, y), tileConf.chunkSize)
+        .compile
+        .to[Array]
+      val response = (try Ok(bytes) catch { case e: Exception => Ok(emptyVT.toBytes) })
       response.map { _.withContentType(vtileContentType) }
 
     case GET -> Root / "hashtag" / hashtag / IntVar(z) / IntVar(x) / IntVar(y) =>
-      val stream = store.get(tilePath(s"${tileConf.s3prefix}/hashtag/${hashtag}", z, x, y), tileConf.chunkSize)
-      val response = (try Ok(stream) catch { case e: Exception => Ok(emptyVT.toBytes) })
+      val bytes = store
+        .get(tilePath(s"${tileConf.s3prefix}/hashtag/${hashtag}", z, x, y), tileConf.chunkSize)
+        .compile
+        .to[Array]
+      val response = (try Ok(bytes) catch { case e: Exception => Ok(emptyVT.toBytes) })
       response.map { _.withContentType(vtileContentType) }
   }
 }
