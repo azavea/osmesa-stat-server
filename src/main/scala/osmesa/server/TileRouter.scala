@@ -18,6 +18,8 @@ import org.http4s.headers.{Location, `Content-Type`}
 import blobstore.{Path => BStorePath}
 import blobstore.Store
 import blobstore.s3.S3Store
+import geotrellis.vector.Extent
+import geotrellis.vectortile.VectorTile
 import com.amazonaws.services.s3.AmazonS3ClientBuilder
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -29,7 +31,10 @@ class TileRouter(tileConf: Config.Tiles) extends Http4sDsl[IO] {
 
   private val s3client = AmazonS3ClientBuilder.standard().withRegion("us-east-1").build()
   private val store: Store[IO] = S3Store[IO](s3client)
+
   private val vtileContentType = `Content-Type`(("application", "vnd.mapbox-vector-tile"))
+
+  private val emptyVT = VectorTile(Map(), Extent(0, 0, 1, 1))
 
   def tilePath(pre: String, z: Int, x: Int, y: Int) = {
     BStorePath(tileConf.s3bucket, s"${pre}/${z}/${x}/${y}${tileConf.s3suffix.getOrElse("")}", None, false, None)
@@ -38,10 +43,12 @@ class TileRouter(tileConf: Config.Tiles) extends Http4sDsl[IO] {
   def routes: HttpService[IO] = HttpService[IO] {
     case GET -> Root / "user" / userId / IntVar(z) / IntVar(x) / IntVar(y) =>
       val stream = store.get(tilePath(s"${tileConf.s3prefix}/user/${userId}", z, x, y), tileConf.chunkSize)
-      Ok(stream).map { _.withContentType(vtileContentType) }
+      val response = (try Ok(stream) catch { case e: Exception => Ok(emptyVT.toBytes) })
+      response.map { _.withContentType(vtileContentType) }
 
     case GET -> Root / "hashtag" / hashtag / IntVar(z) / IntVar(x) / IntVar(y) =>
       val stream = store.get(tilePath(s"${tileConf.s3prefix}/hashtag/${hashtag}", z, x, y), tileConf.chunkSize)
-      Ok(stream).map { _.withContentType(vtileContentType) }
+      val response = (try Ok(stream) catch { case e: Exception => Ok(emptyVT.toBytes) })
+      response.map { _.withContentType(vtileContentType) }
   }
 }
