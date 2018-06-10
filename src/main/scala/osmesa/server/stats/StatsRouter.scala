@@ -1,4 +1,4 @@
-package osmesa.server
+package osmesa.server.stats
 
 import osmesa.server.model._
 
@@ -39,13 +39,13 @@ class StatsRouter(trans: Transactor[IO]) extends Http4sDsl[IO] {
       Ok("hello world")
 
     case GET -> Root / "users" :? OptionalPageQueryParamMatcher(pageNum) =>
-      Ok(User.getPage(pageNum.getOrElse(0)).map(_.asJson))
+      Ok(UserResponse.getPage(pageNum.getOrElse(0)).map(_.asJson))
 
     case GET -> Root / "users" / IntVar(userId) =>
       for {
-        io <- User.byId(userId)
-        user <- eitherResult(io)
-      } yield user
+        io <- UserResponse.byId(userId)
+        userRes <- eitherResult(io)
+      } yield userRes
 
     // Too many results. The data will get where it needs to go (streamed, chunked response) but the client might well crash
     case GET -> Root / "changesets" :? OptionalPageQueryParamMatcher(pageNum) =>

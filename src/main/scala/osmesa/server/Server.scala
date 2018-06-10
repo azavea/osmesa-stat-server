@@ -1,6 +1,7 @@
 package osmesa.server
 
 import osmesa.server.model._
+import osmesa.server.stats._
 
 import cats.effect._
 import doobie.Transactor
