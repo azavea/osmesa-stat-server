@@ -13,9 +13,9 @@ import cats.implicits._
 import io.circe._
 import io.circe.jawn._
 import io.circe.syntax._
-import io.circe.generic.semiauto._
+import io.circe.generic.extras.Configuration
+import io.circe.generic.extras.semiauto._
 import fs2._
-import fs2.StreamApp.ExitCode
 import org.http4s.circe._
 import org.http4s._
 import org.http4s.dsl.Http4sDsl
@@ -28,11 +28,10 @@ import org.postgresql.util.PGobject
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
-case class UserResponse(
-  id: Long,
+case class UserStats(
+  uid: Long,
   name: Option[String],
   extentUri: Option[String],
-  changesets: Option[List[Long]],
   buildingsAdd: Option[Int],
   buildingsMod: Option[Int],
   roadsAdd: Option[Int],
@@ -50,9 +49,10 @@ case class UserResponse(
   hashtags: Json
 )
 
-object UserResponse {
-  implicit val userResponseDecoder: Decoder[UserResponse] = deriveDecoder
-  implicit val userResponseEncoder: Encoder[UserResponse] = deriveEncoder
+object UserStats {
+  implicit val customConfig: Configuration = Configuration.default.withSnakeCaseConstructorNames.withDefaults
+  implicit val userStatsDecoder: Decoder[UserStats] = deriveDecoder
+  implicit val userStatsEncoder: Encoder[UserStats] = deriveEncoder
 
   implicit val JsonMeta: Meta[Json] =
     Meta.other[PGobject]("json").xmap[Json](
@@ -67,7 +67,7 @@ object UserResponse {
 
   private val selectF = fr"""
       SELECT
-        id, name, extent_uri, changesets, buildings_added, buildings_modified,
+        id, name, extent_uri, buildings_added, buildings_modified,
         roads_added, road_km_added, roads_modified, road_km_modified, waterways_added,
         waterway_km_added, pois_added, changeset_count, edit_count, editors,
         edit_times, country_list, hashtags
@@ -75,9 +75,9 @@ object UserResponse {
         user_statistics
     """
 
-  def byId(id: Long)(implicit xa: Transactor[IO]): IO[Either[OsmStatError, UserResponse]] =
+  def byId(id: Long)(implicit xa: Transactor[IO]): IO[Either[OsmStatError, UserStats]] =
     (selectF ++ fr"WHERE id = $id")
-      .query[UserResponse]
+      .query[UserStats]
       .option
       .transact(xa)
       .map {
@@ -85,10 +85,10 @@ object UserResponse {
         case None => Left(IdNotFoundError("user", id))
       }
 
-  def getPage(pageNum: Int)(implicit xa: Transactor[IO]): IO[ResultPage[UserResponse]] = {
+  def getPage(pageNum: Int)(implicit xa: Transactor[IO]): IO[ResultPage[UserStats]] = {
     val offset = pageNum * 10 + 1
     (selectF ++ fr"ORDER BY id ASC LIMIT 10 OFFSET $offset")
-      .query[UserResponse]
+      .query[UserStats]
       .to[List]
       .map({ ResultPage(_, pageNum) })
       .transact(xa)

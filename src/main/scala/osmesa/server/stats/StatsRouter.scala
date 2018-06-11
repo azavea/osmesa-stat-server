@@ -39,11 +39,11 @@ class StatsRouter(trans: Transactor[IO]) extends Http4sDsl[IO] {
       Ok("hello world")
 
     case GET -> Root / "users" :? OptionalPageQueryParamMatcher(pageNum) =>
-      Ok(UserResponse.getPage(pageNum.getOrElse(0)).map(_.asJson))
+      Ok(UserStats.getPage(pageNum.getOrElse(0)).map(_.asJson))
 
     case GET -> Root / "users" / IntVar(userId) =>
       for {
-        io <- UserResponse.byId(userId)
+        io <- UserStats.byId(userId)
         userRes <- eitherResult(io)
       } yield userRes
 
