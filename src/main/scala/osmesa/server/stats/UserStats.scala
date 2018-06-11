@@ -28,6 +28,7 @@ import org.postgresql.util.PGobject
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
+
 case class UserStats(
   uid: Long,
   name: Option[String],
@@ -50,7 +51,7 @@ case class UserStats(
 )
 
 object UserStats {
-  implicit val customConfig: Configuration = Configuration.default.withSnakeCaseConstructorNames.withDefaults
+  implicit val customConfig: Configuration = Configuration.default.withSnakeCaseMemberNames.withDefaults
   implicit val userStatsDecoder: Decoder[UserStats] = deriveDecoder
   implicit val userStatsEncoder: Encoder[UserStats] = deriveEncoder
 
