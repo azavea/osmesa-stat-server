@@ -67,7 +67,7 @@ object HashtagStats {
         tag, extent_uri, buildings_added, buildings_modified,
         roads_added, road_km_added, roads_modified, road_km_modified,
         waterways_added, waterway_km_added, waterways_modified,
-        waterways_km_modified, pois_added, pois_modified, users
+        waterway_km_modified, pois_added, pois_modified, users
       FROM
         hashtag_statistics
     """
@@ -80,7 +80,7 @@ object HashtagStats {
       .attempt
       .transact(xa)
       .map {
-        case Right(hashtagOrNone) => println("right");hashtagOrNone
+        case Right(hashtagOrNone) => println("no doobie error");hashtagOrNone
         case Left(t) => println(s"left ${t.toString}"); throw t
       }
   }
@@ -90,7 +90,13 @@ object HashtagStats {
     (selectF ++ fr"ORDER BY id ASC LIMIT 10 OFFSET $offset")
       .query[HashtagStats]
       .to[List]
-      .map({ ResultPage(_, pageNum) })
+      .attempt
       .transact(xa)
+      .map {
+        case Right(results) => println("no doobie error");ResultPage(results, pageNum)
+        case Left(err) =>
+          println(s"error: ${err.toString}")
+          throw err
+      }
   }
 }
