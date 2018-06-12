@@ -25,7 +25,6 @@ import org.http4s.server.middleware.{GZip, CORS, CORSConfig}
 import org.http4s.headers.{Location, `Content-Type`}
 import org.postgresql.util.PGobject
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
 
