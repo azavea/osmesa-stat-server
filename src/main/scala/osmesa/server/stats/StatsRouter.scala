@@ -25,7 +25,7 @@ class StatsRouter(trans: Transactor[IO]) extends Http4sDsl[IO] {
   private def eitherResult[Result: Encoder](result: Either[OsmStatError, Result]) = {
     result match {
       case Right(succ) => Ok(succ.asJson, `Content-Type`(MediaType.`application/json`))
-      case Left(err) => println(err);NotFound(err.toString)
+      case Left(err) => NotFound(err.toString)
     }
   }
 
@@ -39,11 +39,9 @@ class StatsRouter(trans: Transactor[IO]) extends Http4sDsl[IO] {
       Ok("hello world")
 
     case GET -> Root / "users" :? OptionalPageQueryParamMatcher(pageNum) =>
-      println("USERS")
       Ok(UserStats.getPage(pageNum.getOrElse(0)).map(_.asJson))
 
     case GET -> Root / "users" / IntVar(userId) =>
-      println("USERS")
       for {
         io <- UserStats.byId(userId)
         userRes <- eitherResult(io)
@@ -60,17 +58,15 @@ class StatsRouter(trans: Transactor[IO]) extends Http4sDsl[IO] {
       } yield changeset
 
     case GET -> Root / "campaigns" :? OptionalPageQueryParamMatcher(pageNum) =>
-      println(s"CAMPAIGNS")
-      Ok(HashtagStats.getPage(pageNum.getOrElse(0)).map(_.asJson))
+      for {
+        io <- HashtagStats.getPage(pageNum.getOrElse(0))
+        res <- eitherResult(io)
+      } yield res
 
     case GET -> Root / "campaigns" / hashtag =>
-      println(s"CAMPAIGNS $hashtag")
       for {
         io <- HashtagStats.byTag(hashtag)
-        result <- { println(s"IO $io");io match {
-                    case Some(res) => Ok(res.asJson, `Content-Type`(MediaType.`application/json`))
-                    case None => NotFound(hashtag)
-                  } }
+        result <- eitherResult(io)
       } yield result
 
     case GET -> Root / "countries" :? OptionalPageQueryParamMatcher(pageNum) =>
