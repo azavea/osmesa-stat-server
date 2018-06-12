@@ -57,12 +57,12 @@ class StatsRouter(trans: Transactor[IO]) extends Http4sDsl[IO] {
         changeset <- eitherResult(io)
       } yield changeset
 
-    case GET -> Root / "hashtags" :? OptionalPageQueryParamMatcher(pageNum) =>
-      Ok(Hashtag.getPage(pageNum.getOrElse(0)).map(_.asJson))
+    case GET -> Root / "campaign" :? OptionalPageQueryParamMatcher(pageNum) =>
+      Ok(HashtagStats.getPage(pageNum.getOrElse(0)).map(_.asJson))
 
-    case GET -> Root / "hashtags" / IntVar(hashtagId) =>
+    case GET -> Root / "campaign" / hashtag =>
       for {
-        io <- Hashtag.byId(hashtagId)
+        io <- HashtagStats.byTag(hashtag)
         hashtag <- eitherResult(io)
       } yield hashtag
 
