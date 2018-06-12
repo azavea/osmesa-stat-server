@@ -72,31 +72,30 @@ object HashtagStats {
         hashtag_statistics
     """
 
-  def byTag(tag: String)(implicit xa: Transactor[IO]): IO[Option[HashtagStats]] = {
-    println(s"BY TAG $tag")
+  def byTag(tag: String)(implicit xa: Transactor[IO]): IO[Either[OsmStatError, HashtagStats]] =
     (selectF ++ fr"WHERE tag = $tag")
       .query[HashtagStats]
       .option
       .attempt
       .transact(xa)
       .map {
-        case Right(hashtagOrNone) => println("no doobie error");hashtagOrNone
-        case Left(t) => println(s"left ${t.toString}"); throw t
+        case Right(hashtagOrNone) => hashtagOrNone match {
+          case Some(ht) => Right(ht)
+          case None => Left(IdNotFoundError("hashtag_statistics", tag))
+        }
+        case Left(err) => Left(UnknownError(err.toString))
       }
-  }
 
-  def getPage(pageNum: Int)(implicit xa: Transactor[IO]): IO[ResultPage[HashtagStats]] = {
+  def getPage(pageNum: Int)(implicit xa: Transactor[IO]): IO[Either[OsmStatError, ResultPage[HashtagStats]]] = {
     val offset = pageNum * 10 + 1
-    (selectF ++ fr"ORDER BY id ASC LIMIT 10 OFFSET $offset")
+    (selectF ++ fr"ORDER BY tag ASC LIMIT 10 OFFSET $offset")
       .query[HashtagStats]
       .to[List]
       .attempt
       .transact(xa)
       .map {
-        case Right(results) => println("no doobie error");ResultPage(results, pageNum)
-        case Left(err) =>
-          println(s"error: ${err.toString}")
-          throw err
+        case Right(results) => Right(ResultPage(results, pageNum))
+        case Left(err) => Left(UnknownError(err.toString))
       }
   }
 }
