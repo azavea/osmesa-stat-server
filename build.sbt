@@ -1,4 +1,4 @@
-scalaVersion := "2.12.6"
+scalaVersion := "2.11.12"
 
 description := "OSMesa Statistics Server"
 
@@ -17,25 +17,40 @@ scalacOptions ++= Seq(
   "-language:existentials",
   "-feature"
 )
+externalResolvers ++= Seq(
+ "locationtech-releases" at "https://repo.locationtech.org/content/groups/releases",
+ "locationtech-snapshots" at "https://repo.locationtech.org/content/groups/snapshots",
+ Resolver.file("localBackup", file(Path.userHome.absolutePath + "/.ivy2/local"))(Resolver.ivyStylePatterns)
+)
 
 val Http4sVer = "0.18.11"
 val DoobieVer = "0.5.3"
 val CirceVer = "0.10.0-M1"
 val ScalaTestVer = "3.0.5"
+val GeotrellisVer = "2.0.0-RC1"
+val fs2BlobstoreVer = "0.1.0-SNAPSHOT"
 libraryDependencies ++= Seq(
-  "org.http4s"    %% "http4s-blaze-server" % Http4sVer,
-  "org.http4s"    %% "http4s-dsl"          % Http4sVer,
-  "org.http4s"    %% "http4s-circe"        % Http4sVer,
-  "io.circe"      %% "circe-core"          % CirceVer,
-  "io.circe"      %% "circe-generic"       % CirceVer,
-  "io.circe"      %% "circe-parser"        % CirceVer,
-  "io.circe"      %% "circe-java8"         % CirceVer,
-  "org.tpolecat"  %% "doobie-core"         % DoobieVer,
-  "org.tpolecat"  %% "doobie-postgres"     % DoobieVer,
-  "org.tpolecat"  %% "doobie-hikari"       % DoobieVer,
-  "org.tpolecat"  %% "doobie-scalatest"    % DoobieVer    % "test",  // ScalaTest support for typechecking statements.
-  "org.flywaydb"  %  "flyway-core"         % "4.2.0",
-  "com.github.pureconfig" %% "pureconfig"  % "0.9.1",
+  "com.amazonaws" % "aws-java-sdk-s3"       % "1.11.283",
+  "org.http4s"    %% "http4s-blaze-server"  % Http4sVer,
+  "org.http4s"    %% "http4s-dsl"           % Http4sVer,
+  "org.http4s"    %% "http4s-circe"         % Http4sVer,
+  "io.circe"      %% "circe-core"           % CirceVer,
+  "io.circe"      %% "circe-generic"        % CirceVer,
+  "io.circe"      %% "circe-parser"         % CirceVer,
+  "io.circe"      %% "circe-java8"          % CirceVer,
+  "io.circe"      %% "circe-generic-extras" % CirceVer,
+  "org.tpolecat"  %% "doobie-core"          % DoobieVer,
+  "org.tpolecat"  %% "doobie-postgres"      % DoobieVer,
+  "org.tpolecat"  %% "doobie-hikari"        % DoobieVer,
+  "org.tpolecat"  %% "doobie-scalatest"     % DoobieVer % "test",
+  "org.flywaydb"  %  "flyway-core"          % "4.2.0",
+  "com.github.pureconfig" %% "pureconfig"   % "0.9.1",
+  "org.locationtech.geotrellis" %% "geotrellis-raster" % GeotrellisVer,
+  "org.locationtech.geotrellis" %% "geotrellis-spark" % GeotrellisVer,
+  "org.locationtech.geotrellis" %% "geotrellis-vectortile" % GeotrellisVer,
+  "com.lendup.fs2-blobstore" %% "core" % fs2BlobstoreVer,
+  "com.lendup.fs2-blobstore" %% "sftp" % fs2BlobstoreVer,
+  "com.lendup.fs2-blobstore" %% "s3"   % fs2BlobstoreVer,
   "org.scalatest" %%  "scalatest"          % ScalaTestVer % "test"
 )
 

@@ -1,4 +1,4 @@
-package osmesa.server
+package osmesa.server.stats
 
 import osmesa.server.model._
 
@@ -20,7 +20,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
 
-class OsmesaRouter(trans: Transactor[IO]) extends Http4sDsl[IO] {
+class StatsRouter(trans: Transactor[IO]) extends Http4sDsl[IO] {
 
   private def eitherResult[Result: Encoder](result: Either[OsmStatError, Result]) = {
     result match {
@@ -39,13 +39,13 @@ class OsmesaRouter(trans: Transactor[IO]) extends Http4sDsl[IO] {
       Ok("hello world")
 
     case GET -> Root / "users" :? OptionalPageQueryParamMatcher(pageNum) =>
-      Ok(User.getPage(pageNum.getOrElse(0)).map(_.asJson))
+      Ok(UserStats.getPage(pageNum.getOrElse(0)).map(_.asJson))
 
     case GET -> Root / "users" / IntVar(userId) =>
       for {
-        io <- User.byId(userId)
-        user <- eitherResult(io)
-      } yield user
+        io <- UserStats.byId(userId)
+        userRes <- eitherResult(io)
+      } yield userRes
 
     // Too many results. The data will get where it needs to go (streamed, chunked response) but the client might well crash
     case GET -> Root / "changesets" :? OptionalPageQueryParamMatcher(pageNum) =>
@@ -57,14 +57,17 @@ class OsmesaRouter(trans: Transactor[IO]) extends Http4sDsl[IO] {
         changeset <- eitherResult(io)
       } yield changeset
 
-    case GET -> Root / "hashtags" :? OptionalPageQueryParamMatcher(pageNum) =>
-      Ok(Hashtag.getPage(pageNum.getOrElse(0)).map(_.asJson))
-
-    case GET -> Root / "hashtags" / IntVar(hashtagId) =>
+    case GET -> Root / "campaigns" :? OptionalPageQueryParamMatcher(pageNum) =>
       for {
-        io <- Hashtag.byId(hashtagId)
-        hashtag <- eitherResult(io)
-      } yield hashtag
+        io <- HashtagStats.getPage(pageNum.getOrElse(0))
+        res <- eitherResult(io)
+      } yield res
+
+    case GET -> Root / "campaigns" / hashtag =>
+      for {
+        io <- HashtagStats.byTag(hashtag)
+        result <- eitherResult(io)
+      } yield result
 
     case GET -> Root / "countries" :? OptionalPageQueryParamMatcher(pageNum) =>
       Ok(Country.getPage(pageNum.getOrElse(0)).map(_.asJson))

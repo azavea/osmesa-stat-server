@@ -1,6 +1,7 @@
 package osmesa.server
 
 import osmesa.server.model._
+import osmesa.server.stats._
 
 import cats.effect._
 import doobie.Transactor
@@ -35,14 +36,16 @@ object Server extends StreamApp[IO] {
 
   def stream(args: List[String], requestShutdown: IO[Unit]): Stream[IO, ExitCode] = {
     for {
-      config <- Stream.eval(Config.load())
+      config     <- Stream.eval(Config.load())
       transactor <- Stream.eval(Database.transactor(config.database))
-      //_ <- Stream.eval(Database.initialize(transactor))
-      service = middleware(new OsmesaRouter(transactor).routes)
+      //_        <- Stream.eval(Database.initialize(transactor))
+      stats = middleware(new StatsRouter(transactor).routes)
+      tiles = middleware(new TileRouter(config.tiles).routes)
       exitCode   <- BlazeBuilder[IO]
         .enableHttp2(true)
         .bindHttp(config.server.port, config.server.host)
-        .mountService(service)
+        .mountService(stats, "/")
+        .mountService(tiles, "/tiles")
         .serve
     } yield exitCode
   }
