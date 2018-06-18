@@ -15,7 +15,7 @@ import org.http4s.dsl.Http4sDsl
 import org.http4s.server.blaze.BlazeBuilder
 import org.http4s.server.HttpMiddleware
 import org.http4s.server.middleware.{GZip, CORS, CORSConfig}
-import org.http4s.headers.{Location, `Content-Type`}
+import org.http4s.headers.{Location, `Content-Type`, `Content-Encoding`}
 import blobstore.{Path => BStorePath}
 import blobstore.Store
 import blobstore.s3.S3Store
@@ -47,7 +47,7 @@ class TileRouter(tileConf: Config.Tiles) extends Http4sDsl[IO] {
         .get(tilePath(s"${tileConf.s3prefix}/user/${userId}", z, x, y), tileConf.chunkSize)
         .compile
         .to[Array]
-      val response = (try Ok(bytes) catch { case e: Exception => Ok(emptyVT.toBytes) })
+      val response = (try Ok(bytes, `Content-Encoding`(ContentCoding.gzip)) catch { case e: Exception => Ok(emptyVT.toBytes) })
       response.map { _.withContentType(vtileContentType) }
 
     case GET -> Root / "hashtag" / hashtag / IntVar(z) / IntVar(x) / y =>
@@ -55,7 +55,7 @@ class TileRouter(tileConf: Config.Tiles) extends Http4sDsl[IO] {
         .get(tilePath(s"${tileConf.s3prefix}/hashtag/${hashtag}", z, x, y), tileConf.chunkSize)
         .compile
         .to[Array]
-      val response = (try Ok(bytes) catch { case e: Exception => Ok(emptyVT.toBytes) })
+      val response = (try Ok(bytes, `Content-Encoding`(ContentCoding.gzip)) catch { case e: Exception => Ok(emptyVT.toBytes) })
       response.map { _.withContentType(vtileContentType) }
   }
 }
