@@ -46,7 +46,7 @@ object Server extends StreamApp[IO] {
         .enableHttp2(true)
         .bindHttp(config.server.port, config.server.host)
         .mountService(stats, "/")
-        .mountService(tiles, "/extent")
+        .mountService(tiles, "/extents")
         .serve
     } yield exitCode
   }
