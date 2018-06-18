@@ -9,7 +9,7 @@ docker/osm-stat-server/osm-stat-server.jar:
 	sbt assembly
 	mv target/scala-2.11/osm-stat-server.jar docker/osm-stat-server/osm-stat-server.jar
 
-build: docker/osm-stat-server/osm-stat-server.jar
+build: clean
 	docker-compose build
 
 serve: build
