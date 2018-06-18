@@ -74,9 +74,9 @@ object UserStats {
         case None => Left(IdNotFoundError("user", id))
       }
 
-  def getPage(pageNum: Int)(implicit xa: Transactor[IO]): IO[ResultPage[UserStats]] = {
-    val offset = pageNum * 10 + 1
-    (selectF ++ fr"ORDER BY id ASC LIMIT 10 OFFSET $offset")
+  def getPage(pageNum: Int, pageSize: Int = 25)(implicit xa: Transactor[IO]): IO[ResultPage[UserStats]] = {
+    val offset = pageNum * pageSize + 1
+    (selectF ++ fr"ORDER BY id ASC LIMIT $pageSize OFFSET $offset")
       .query[UserStats]
       .to[List]
       .map({ ResultPage(_, pageNum) })
