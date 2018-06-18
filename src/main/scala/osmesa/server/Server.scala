@@ -2,6 +2,7 @@ package osmesa.server
 
 import osmesa.server.model._
 import osmesa.server.stats._
+import osmesa.server.tile._
 
 import cats.effect._
 import doobie.Transactor
@@ -45,7 +46,7 @@ object Server extends StreamApp[IO] {
         .enableHttp2(true)
         .bindHttp(config.server.port, config.server.host)
         .mountService(stats, "/")
-        .mountService(tiles, "/tiles")
+        .mountService(tiles, "/extent")
         .serve
     } yield exitCode
   }

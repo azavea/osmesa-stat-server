@@ -1,5 +1,6 @@
-package osmesa.server
+package osmesa.server.tile
 
+import osmesa.server.Config
 import osmesa.server.model._
 
 import cats.effect._
