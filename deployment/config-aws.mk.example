@@ -15,12 +15,12 @@ export INSTANCE_ROLE := [IAM instance role]
 export HOST        := 0.0.0.0
 export PORT        := 80
 
-export DB_DRIVER   := org.V
+export DB_DRIVER   := org.postgresql.Driver
 export DB_URL      := [database URI, e.g. jdbc:postgresql://<host]>[:<port>]/<database>]
 export DB_USER     := [database username]
 export DB_PASS     := [database password]
 
 export TILE_BUCKET := [S3 bucket]
 export TILE_PREFIX := [S3 prefix]
-export TILE_SUFFIX := [Tile suffix (typically file extension)]
+export TILE_SUFFIX := [Tile suffix (typically file extension, including '.')]
 export GZIPPED     := [Whether to expect pre-gzipped tiles on S3 (true or false)]

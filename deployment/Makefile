@@ -9,13 +9,15 @@ LOCAL_IMG := quay.io/geotrellis/osm-stat-server:latest
 #########
 
 login-aws-registry:
-	eval `aws ecr get-login --no-include-email --region us-east-1`
+	eval `aws ecr get-login --no-include-email --region ${AWS_REGION}`
 
-tag-image: login-aws-registry
+tag-image:
 	docker tag ${LOCAL_IMG} ${ECR_REPO}
 
 push-image: login-aws-registry tag-image
 	docker push ${ECR_REPO}
+
+.PHONY: docker-compose.deploy.yml
 
 docker-compose.deploy.yml:
 	export ECR_REPO=${ECR_REPO}
@@ -35,13 +37,13 @@ docker-compose.deploy.yml:
 configure-cluster:
 	ecs-cli configure \
 	  --cluster ${CLUSTER_NAME} \
-	  --region us-east-1 \
+	  --region ${AWS_REGION} \
 	  --config-name ${CONFIG_NAME}
 
 cluster-up:
 	ecs-cli up \
 	  --keypair ${KEYPAIR} \
-	  --instance-role osmstats-deploy_ec2 \
+	  --instance-role ${INSTANCE_ROLE} \
 	  --size 1 \
 	  --instance-type ${INSTANCE_TYPE} \
 	  --cluster-config ${CONFIG_NAME} \
@@ -53,15 +55,17 @@ cluster-up:
 cluster-down:
 	ecs-cli down --cluster-config ${CONFIG_NAME}
 
-create-service:
+.PHONY: create-service
+
+create-service: docker-compose.deploy.yml configure-cluster
 	ecs-cli compose \
-	  --file docker-compose.deploy.yml create \
+	  --file $< create \
 	  --cluster ${CLUSTER_NAME}
 
-start-service: create-service
-	ecs-cli compose --file docker-compose.deploy.yml service up \
+start-service: docker-compose.deploy.yml configure-cluster create-service
+	ecs-cli compose --file $< service up \
 	  --create-log-groups \
-	  --cluster osm-stat-stream-cluster
+	  --cluster ${CLUSTER_NAME}
 
 stop-service:
 	ecs-cli compose down
@@ -71,7 +75,7 @@ stop-service:
 #  ALL  #
 #########
 build-container:
-	cd .. && ./build-container.sh
+	make -C .. build
 
 clean:
 	rm -f docker-compose.deploy.yml
