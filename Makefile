@@ -5,11 +5,9 @@ clean:
 	rm -rf target
 	docker-compose down
 
-docker/osm-stat-server/osm-stat-server.jar:
+build: clean
 	sbt assembly
-	mv target/scala-2.11/osm-stat-server.jar docker/osm-stat-server/osm-stat-server.jar
-
-build: docker/osm-stat-server/osm-stat-server.jar
+	ln target/scala-2.11/osm-stat-server.jar docker/osm-stat-server/osm-stat-server.jar
 	docker-compose build
 
 serve: build

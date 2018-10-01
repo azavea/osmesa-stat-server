@@ -11,7 +11,7 @@ case class Config(server: Config.Server, database: Config.Database, tiles: Confi
 object Config {
   case class Database(driver: String, url: String, user: String, password: String)
   case class Server(host: String, port: Int)
-  case class Tiles(s3bucket: String, s3prefix: String, s3suffix: Option[String], chunkSize: Int)
+  case class Tiles(s3bucket: String, s3prefix: String, s3suffix: Option[String], chunkSize: Int, gzipped: Boolean)
 
   import pureconfig._
 
