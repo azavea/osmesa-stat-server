@@ -22,6 +22,7 @@ import blobstore.s3.S3Store
 import geotrellis.vector.Extent
 import geotrellis.vectortile.VectorTile
 import com.amazonaws.services.s3.AmazonS3ClientBuilder
+import com.amazonaws.services.s3.model.AmazonS3Exception
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -43,19 +44,35 @@ class TileRouter(tileConf: Config.Tiles) extends Http4sDsl[IO] {
 
   def routes: HttpService[IO] = HttpService[IO] {
     case GET -> Root / "user" / userId / IntVar(z) / IntVar(x) / y =>
-      val bytes = store
+      val getBytes = store
         .get(tilePath(s"${tileConf.s3prefix}/user/${userId}", z, x, y), tileConf.chunkSize)
         .compile
         .to[Array]
-      val response = (try Ok(bytes, `Content-Encoding`(ContentCoding.gzip)) catch { case e: Exception => Ok(emptyVT.toBytes) })
-      response.map { _.withContentType(vtileContentType) }
+        .attempt
+
+      getBytes.flatMap {
+        case Right(bytes) if tileConf.gzipped =>
+          Ok(bytes, `Content-Encoding`(ContentCoding.gzip))
+        case Right(bytes) =>
+          Ok(bytes)
+        case Left(s3e: AmazonS3Exception) if s3e.getStatusCode == 403 || s3e.getStatusCode == 404 =>
+          Ok(emptyVT.toBytes)
+      }.map(_.withContentType(vtileContentType))
 
     case GET -> Root / "hashtag" / hashtag / IntVar(z) / IntVar(x) / y =>
-      val bytes = store
+      val getBytes = store
         .get(tilePath(s"${tileConf.s3prefix}/hashtag/${hashtag}", z, x, y), tileConf.chunkSize)
         .compile
         .to[Array]
-      val response = (try Ok(bytes, `Content-Encoding`(ContentCoding.gzip)) catch { case e: Exception => Ok(emptyVT.toBytes) })
-      response.map { _.withContentType(vtileContentType) }
+        .attempt
+
+      getBytes.flatMap {
+        case Right(bytes) if tileConf.gzipped =>
+          Ok(bytes, `Content-Encoding`(ContentCoding.gzip))
+        case Right(bytes) =>
+          Ok(bytes)
+        case Left(s3e: AmazonS3Exception) if s3e.getStatusCode == 403 || s3e.getStatusCode == 404 =>
+          Ok(emptyVT.toBytes)
+      }.map(_.withContentType(vtileContentType))
   }
 }
