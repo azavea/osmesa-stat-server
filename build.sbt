@@ -28,7 +28,7 @@ val DoobieVer = "0.5.3"
 val CirceVer = "0.10.0-M1"
 val ScalaTestVer = "3.0.5"
 val GeotrellisVer = "2.0.0-RC1"
-val fs2BlobstoreVer = "0.1.0-SNAPSHOT"
+val fs2BlobstoreVer = "0.1.+"
 libraryDependencies ++= Seq(
   "com.amazonaws" % "aws-java-sdk-s3"       % "1.11.283",
   "org.http4s"    %% "http4s-blaze-server"  % Http4sVer,
