@@ -1,0 +1,9 @@
+# this file should be in deployment dir (relative to Makefile path)
+# https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-cpu-memory-error.html
+# NOTE: comment it out for the test case
+version: 1
+task_definition:
+  services:
+    stats-server:
+      mem_reservation: 4096m
+
