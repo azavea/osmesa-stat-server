@@ -20,19 +20,7 @@ push-image: login-aws-registry tag-image
 .PHONY: docker-compose.deploy.yml
 
 docker-compose.deploy.yml:
-	export ECR_REPO=${ECR_REPO}
-	export AWS_LOG_GROUP=${AWS_LOG_GROUP}; \
-	export AWS_REGION=${AWS_REGION}; \
-	export HOST=${HOST}; \
-	export PORT=${PORT}; \
-	export DB_DRIVER=${DB_DRIVER}; \
-	export DB_URL=${DB_URL}; \
-	export DB_USER=${DB_USER}; \
-	export DB_PASS=${DB_PASS}; \
-	export TILE_BUCKET=${TILE_BUCKET}; \
-	export TILE_PREFIX=${TILE_PREFIX}; \
-	export GZIPPED=${GZIPPED}; \
-		./expand.sh docker-compose.deploy.yml.tpl > docker-compose.deploy.yml
+	./expand.sh docker-compose.deploy.yml.tpl > docker-compose.deploy.yml
 
 configure-cluster:
 	ecs-cli configure \
@@ -64,6 +52,7 @@ create-service: docker-compose.deploy.yml configure-cluster
 
 start-service: docker-compose.deploy.yml configure-cluster create-service
 	ecs-cli compose --file $< service up \
+	  --deployment-min-healthy-percent 0 \
 	  --create-log-groups \
 	  --cluster ${CLUSTER_NAME}
 
@@ -74,7 +63,7 @@ stop-service:
 #########
 #  ALL  #
 #########
-build-container:
+build-image:
 	make -C .. build
 
 clean:
