@@ -105,7 +105,7 @@ CREATE MATERIALIZED VIEW user_statistics AS
      agg_stats.edit_count,
      usr_editor_counts.editor_json AS editors,
      usr_day_counts.day_json AS edit_times,
-     usr_country_counts.country_json AS country_list,
+     coalesce(usr_country_counts.country_json, '[]') AS country_list,
      coalesce(usr_hashtag_counts.hashtag_json, '[]') AS hashtags,
      agg_stats.updated_at
     FROM ((((agg_stats
