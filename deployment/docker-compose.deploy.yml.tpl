@@ -15,12 +15,6 @@ services:
       - TILE_BUCKET=${TILE_BUCKET}
       - TILE_PREFIX=${TILE_PREFIX}
       - GZIPPED=${GZIPPED}
-    deploy:
-      restart_policy:
-        condition: on-failure
-        delay: 1s
-        max_attempts: 10
-        window: 120s
     logging:
       driver: awslogs
       options:
