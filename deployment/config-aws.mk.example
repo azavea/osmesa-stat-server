@@ -20,6 +20,8 @@ export DB_URL      := [database URI, e.g. jdbc:postgresql://<host]>[:<port>]/<da
 export DB_USER     := [database username]
 export DB_PASS     := [database password]
 
+export DATABASE_URL := [standard database URL, for psql, e.g. postgresql://[user][:][password]@<host>[:<port>]/<database>]
+
 export TILE_BUCKET := [S3 bucket]
 export TILE_PREFIX := [S3 prefix]
 export TILE_SUFFIX := [Tile suffix (typically file extension, including '.')]

@@ -15,6 +15,7 @@ services:
       - TILE_BUCKET=${TILE_BUCKET}
       - TILE_PREFIX=${TILE_PREFIX}
       - GZIPPED=${GZIPPED}
+      - DATABASE_URL=${DATABASE_URL}
     logging:
       driver: awslogs
       options:
