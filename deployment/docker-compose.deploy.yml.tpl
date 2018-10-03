@@ -21,4 +21,4 @@ services:
       options:
         awslogs-group: ${AWS_LOG_GROUP}
         awslogs-region: ${AWS_REGION}
-        awslogs-stream-prefix: osmesa-stats-server
+        awslogs-stream-prefix: osmesa-stat-server
