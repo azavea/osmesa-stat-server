@@ -5,5 +5,9 @@ version: 1
 task_definition:
   services:
     stats-server:
-      mem_reservation: 4096m
-
+      mem_reservation: 2048m
+      healthcheck:
+        test: refresh-views.sh
+        interval: 1m
+        timeout: 5s
+        retries: 3

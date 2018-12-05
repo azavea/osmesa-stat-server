@@ -15,15 +15,10 @@ services:
       - TILE_BUCKET=${TILE_BUCKET}
       - TILE_PREFIX=${TILE_PREFIX}
       - GZIPPED=${GZIPPED}
-    deploy:
-      restart_policy:
-        condition: on-failure
-        delay: 1s
-        max_attempts: 10
-        window: 120s
+      - DATABASE_URL=${DATABASE_URL}
     logging:
       driver: awslogs
       options:
         awslogs-group: ${AWS_LOG_GROUP}
         awslogs-region: ${AWS_REGION}
-        awslogs-stream-prefix: nome-statistics
+        awslogs-stream-prefix: osmesa-stat-server

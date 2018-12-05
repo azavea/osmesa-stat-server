@@ -24,6 +24,7 @@ services:
     build:
       context: docker/osm-stat-server
       dockerfile: Dockerfile
+    command: java -jar /opt/osm-stat-server.jar
     environment:
       DB_DRIVER: "org.postgresql.Driver"
       DB_URL: "jdbc:postgresql://db:5432/osm-stats"

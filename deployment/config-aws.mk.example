@@ -1,0 +1,28 @@
+export CONFIG_NAME := osm-stat-stream-config
+
+# AWS properties
+export CLUSTER_NAME := osm-stat-stream-cluster
+export INSTANCE_TYPE := m4.xlarge
+export KEYPAIR := [AWS key pair]
+export VPC := [VPC ID]
+export SUBNETS := [comma-delimited list of subnets within the above VPC]
+export SECURITY_GROUP := [comma-delimited list of AWS Security Group IDs]
+export ECR_REPO := [AWS ECR repo URI]
+export AWS_LOG_GROUP := osm-stats-server
+export AWS_REGION := us-east-1
+export INSTANCE_ROLE := [IAM instance role]
+
+export HOST        := 0.0.0.0
+export PORT        := 80
+
+export DB_DRIVER   := org.postgresql.Driver
+export DB_URL      := [database URI, e.g. jdbc:postgresql://<host]>[:<port>]/<database>]
+export DB_USER     := [database username]
+export DB_PASS     := [database password]
+
+export DATABASE_URL := [standard database URL, for psql, e.g. postgresql://[user][:][password]@<host>[:<port>]/<database>]
+
+export TILE_BUCKET := [S3 bucket]
+export TILE_PREFIX := [S3 prefix]
+export TILE_SUFFIX := [Tile suffix (typically file extension, including '.')]
+export GZIPPED     := [Whether to expect pre-gzipped tiles on S3 (true or false)]
