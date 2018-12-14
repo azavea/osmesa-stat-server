@@ -34,28 +34,36 @@ case class HashtagStats(
   kmWaterwaysAdd: Option[Double],
   waterwaysMod: Option[Int],
   kmWaterwaysMod: Option[Double],
+  coastlinesAdd: Option[Int],
+  kmCoastlinesAdd: Option[Double],
+  coastlinesMod: Option[Int],
+  kmCoastlinesMod: Option[Double],
   poiAdd: Option[Int],
   poiMod: Option[Int],
   users: Json
 )
 
 /**
-----------------------+------------------+-----------+----------+---------
- tag                  | text             |           |          |
- users                | json             |           |          |
- extent_uri           | text             |           |          |
- buildings_added      | bigint           |           |          |
- buildings_modified   | bigint           |           |          |
- roads_added          | bigint           |           |          |
- road_km_added        | double precision |           |          |
- roads_modified       | bigint           |           |          |
- road_km_modified     | double precision |           |          |
- waterways_added      | bigint           |           |          |
- waterway_km_added    | double precision |           |          |
- waterways_modified   | bigint           |           |          |
- waterway_km_modified | double precision |           |          |
- pois_added           | bigint           |           |          |
- pois_modified        | bigint           |           |          |
+-----------------------+------------------+-----------+----------+---------
+ tag                   | text             |           |          |
+ users                 | json             |           |          |
+ extent_uri            | text             |           |          |
+ buildings_added       | bigint           |           |          |
+ buildings_modified    | bigint           |           |          |
+ roads_added           | bigint           |           |          |
+ road_km_added         | double precision |           |          |
+ roads_modified        | bigint           |           |          |
+ road_km_modified      | double precision |           |          |
+ waterways_added       | bigint           |           |          |
+ waterway_km_added     | double precision |           |          |
+ waterways_modified    | bigint           |           |          |
+ waterway_km_modified  | double precision |           |          |
+ coastlines_added      | bigint           |           |          |
+ coastline_km_added    | double precision |           |          |
+ coastlines_modified   | bigint           |           |          |
+ coastline_km_modified | double precision |           |          |
+ pois_added            | bigint           |           |          |
+ pois_modified         | bigint           |           |          |
  **/
 object HashtagStats {
   implicit val customConfig: Configuration = Configuration.default.withSnakeCaseMemberNames.withDefaults
@@ -67,7 +75,9 @@ object HashtagStats {
         tag, extent_uri, buildings_added, buildings_modified,
         roads_added, road_km_added, roads_modified, road_km_modified,
         waterways_added, waterway_km_added, waterways_modified,
-        waterway_km_modified, pois_added, pois_modified, users
+        waterway_km_modified, coastlines_added, coastline_km_added,
+        coastlines_modified, coastline_km_modified, pois_added,
+        pois_modified, users
       FROM
         hashtag_statistics
     """
