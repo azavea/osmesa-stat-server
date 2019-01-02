@@ -6,7 +6,7 @@ clean:
 	docker-compose down
 
 build: clean
-	sbt assembly
+	./sbt assembly
 	ln target/scala-2.11/osm-stat-server.jar docker/osm-stat-server/osm-stat-server.jar
 	docker-compose build
 
