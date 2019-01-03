@@ -45,6 +45,7 @@ case class UserStats(
   coastlinesMod: Option[Int],
   kmCoastlineMod: Option[Double],
   poiAdd: Option[Int],
+  lastEdit: Option[java.sql.Timestamp],
   changesetCount: Option[Int],
   editCount: Option[Int],
   editors: Json,
@@ -63,8 +64,8 @@ object UserStats {
         id, name, extent_uri, buildings_added, buildings_modified,
         roads_added, road_km_added, roads_modified, road_km_modified, waterways_added,
         waterway_km_added, coastlines_added, coastline_km_added, coastlines_modified,
-        coastline_km_modified, pois_added, changeset_count, edit_count, editors,
-        edit_times, country_list, hashtags
+        coastline_km_modified, pois_added, last_edit, changeset_count, edit_count,
+        editors, edit_times, country_list, hashtags
       FROM
         user_statistics
     """
