@@ -40,6 +40,10 @@ case class UserStats(
   kmRoadsMod: Option[Double],
   waterwaysAdd: Option[Int],
   kmWaterwaysAdd: Option[Double],
+  coastlinesAdd: Option[Int],
+  kmCoastlineAdd: Option[Double],
+  coastlinesMod: Option[Int],
+  kmCoastlineMod: Option[Double],
   poiAdd: Option[Int],
   changesetCount: Option[Int],
   editCount: Option[Int],
@@ -58,7 +62,8 @@ object UserStats {
       SELECT
         id, name, extent_uri, buildings_added, buildings_modified,
         roads_added, road_km_added, roads_modified, road_km_modified, waterways_added,
-        waterway_km_added, pois_added, changeset_count, edit_count, editors,
+        waterway_km_added, coastlines_added, coastline_km_added, coastlines_modified,
+        coastline_km_modified, pois_added, changeset_count, edit_count, editors,
         edit_times, country_list, hashtags
       FROM
         user_statistics

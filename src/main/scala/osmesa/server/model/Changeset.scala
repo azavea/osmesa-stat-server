@@ -18,10 +18,14 @@ case class Changeset(
   roadKmModified: Option[Double],
   waterwayKmAdded: Option[Double],
   waterwayKmModified: Option[Double],
+  coastlineKmAdded: Option[Double],
+  coastlineKmModified: Option[Double],
   roadsAdded: Option[Int],
   roadsModified: Option[Int],
   waterwaysAdded: Option[Int],
   waterwaysModified: Option[Int],
+  coastlinesAdded: Option[Int],
+  coastlinesModified: Option[Int],
   buildingsAdded: Option[Int],
   buildingsModified: Option[Int],
   poisAdded: Option[Int],
@@ -43,9 +47,10 @@ object Changeset {
   private val selectF = fr"""
       SELECT
         id, road_km_added, road_km_modified, waterway_km_added, waterway_km_modified,
-        roads_added, roads_modified, waterways_added, waterways_modified, buildings_added,
-        buildings_modified, pois_added, pois_modified, editor, user_id, created_at,
-        closed_at, augmented_diffs, updated_at
+        coastline_km_added, coastline_km_modified, roads_added, roads_modified,
+        waterways_added, waterways_modified, coastlines_added, coastlines_modified,
+        buildings_added, buildings_modified, pois_added, pois_modified, editor, user_id,
+        created_at, closed_at, augmented_diffs, updated_at
       FROM
         changesets
     """
@@ -70,4 +75,3 @@ object Changeset {
   }
 
 }
-
