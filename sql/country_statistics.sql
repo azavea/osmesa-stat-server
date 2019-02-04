@@ -6,9 +6,9 @@ CREATE MATERIALIZED VIEW country_statistics AS
         countries.name AS country_name,
         cc.edit_count,
         hts.hashtag_id
-      FROM (changesets_countries cc
-        JOIN countries ON ((cc.country_id = countries.id))
-        JOIN changesets_hashtags hts ON (hts.changeset_id = cc.changeset_id))
+      FROM ((changesets_countries cc
+        JOIN countries ON ((cc.country_id = countries.id)))
+        FULL OUTER JOIN changesets_hashtags hts ON (hts.changeset_id = cc.changeset_id))
     ), user_edits AS (
       SELECT c_chg.country_id,
           c_chg.edit_count,
@@ -25,6 +25,18 @@ CREATE MATERIALIZED VIEW country_statistics AS
       SELECT country_id,
           json_agg(json_build_object('user', user_id, 'count', edits)) AS edits
         FROM country_edits
+        GROUP BY country_id
+    ), ht_edits AS (
+      SELECT cc.id as country_id,
+          hts.hashtag,
+          sum(edit_count) as edit_count
+        FROM (country_counts cc
+          JOIN hashtags hts ON cc.hashtag_id = hts.id)
+        GROUP BY cc.id, hts.hashtag
+    ), ht_json AS (
+      SELECT country_id,
+          json_agg(json_build_object('hashtag', hashtag, 'count', edit_count)) as hashtag_edits
+        FROM ht_edits
         GROUP BY country_id
     ), agg_stats AS (
     SELECT cc.id as country_id,
@@ -49,7 +61,7 @@ CREATE MATERIALIZED VIEW country_statistics AS
         max(COALESCE(chg.closed_at, chg.created_at, chg.updated_at)) AS updated_at,
         count(*) AS changeset_count,
         sum(cc.edit_count) AS edit_count,
-        array_agg(cc.hashtag_id) AS hashtags
+        array_remove(array_agg(DISTINCT cc.hashtag_id), NULL) AS hashtags
       FROM (changesets chg
         JOIN country_counts cc ON ((cc.changeset_id = chg.id)))
       GROUP BY cc.id
@@ -78,9 +90,10 @@ CREATE MATERIALIZED VIEW country_statistics AS
       agg.changeset_count,
       agg.edit_count,
       jce.edits AS user_edit_counts,
-      agg.hashtags
+      hts.hashtag_edits
     FROM (agg_stats agg
-      JOIN json_country_edits jce ON (agg.country_id = jce.country_id)
+      FULL OUTER JOIN json_country_edits jce ON (agg.country_id = jce.country_id)
+      FULL OUTER JOIN ht_json hts ON (agg.country_id = hts.country_id)
       JOIN countries ON agg.country_id = countries.id);
 
 CREATE UNIQUE INDEX country_statistics_id ON country_statistics(country_id);
