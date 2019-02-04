@@ -1,14 +1,33 @@
 CREATE MATERIALIZED VIEW country_statistics AS
   WITH country_counts AS (
     SELECT cc.changeset_id,
-        countries.id AS country_id,
+        countries.id,
+        countries.code,
         countries.name AS country_name,
-        cc.edit_count
+        cc.edit_count,
+        hts.hashtag_id
       FROM (changesets_countries cc
-        JOIN countries ON ((cc.country_id = countries.id)))
+        JOIN countries ON ((cc.country_id = countries.id))
+        JOIN changesets_hashtags hts ON (hts.changeset_id = cc.changeset_id))
+    ), user_edits AS (
+      SELECT c_chg.country_id,
+          c_chg.edit_count,
+          c.user_id
+        FROM (changesets_countries c_chg
+          JOIN changesets c ON (c.id = c_chg.changeset_id))
+    ), country_edits AS (
+      SELECT country_id,
+          user_id,
+          sum(edit_count) AS edits
+        FROM user_edits
+        GROUP BY country_id, user_id
+    ), json_country_edits AS (
+      SELECT country_id,
+          json_agg(json_build_object('user', user_id, 'count', edits)) AS edits
+        FROM country_edits
+        GROUP BY country_id
     ), agg_stats AS (
-    SELECT cc.country_id,
-        cc.country_name,
+    SELECT cc.id as country_id,
         array_agg(chg.id) AS changesets,
         sum(chg.road_km_added) AS road_km_added,
         sum(chg.road_km_modified) AS road_km_modified,
@@ -29,33 +48,39 @@ CREATE MATERIALIZED VIEW country_statistics AS
         max(coalesce(chg.closed_at, chg.created_at)) AS last_edit,
         max(COALESCE(chg.closed_at, chg.created_at, chg.updated_at)) AS updated_at,
         count(*) AS changeset_count,
-        sum(cc.edit_count) as edit_count
+        sum(cc.edit_count) AS edit_count,
+        array_agg(cc.hashtag_id) AS hashtags
       FROM (changesets chg
         JOIN country_counts cc ON ((cc.changeset_id = chg.id)))
-      GROUP BY cc.country_id, cc.country_name
+      GROUP BY cc.id
     )
-  SELECT agg_stats.country_id,
-     agg_stats.country_name,
-     agg_stats.road_km_added,
-     agg_stats.road_km_modified,
-     agg_stats.waterway_km_added,
-     agg_stats.waterway_km_modified,
-     agg_stats.coastline_km_added,
-     agg_stats.coastline_km_modified,
-     agg_stats.roads_added,
-     agg_stats.roads_modified,
-     agg_stats.waterways_added,
-     agg_stats.waterways_modified,
-     agg_stats.coastlines_added,
-     agg_stats.coastlines_modified,
-     agg_stats.buildings_added,
-     agg_stats.buildings_modified,
-     agg_stats.pois_added,
-     agg_stats.pois_modified,
-     agg_stats.last_edit,
-     agg_stats.updated_at,
-     agg_stats.changeset_count,
-     agg_stats.edit_count
-    FROM agg_stats;
+  SELECT agg.country_id,
+      countries.name AS country_name,
+      countries.code AS country_code,
+      agg.road_km_added,
+      agg.road_km_modified,
+      agg.waterway_km_added,
+      agg.waterway_km_modified,
+      agg.coastline_km_added,
+      agg.coastline_km_modified,
+      agg.roads_added,
+      agg.roads_modified,
+      agg.waterways_added,
+      agg.waterways_modified,
+      agg.coastlines_added,
+      agg.coastlines_modified,
+      agg.buildings_added,
+      agg.buildings_modified,
+      agg.pois_added,
+      agg.pois_modified,
+      agg.last_edit,
+      agg.updated_at,
+      agg.changeset_count,
+      agg.edit_count,
+      jce.edits AS user_edit_counts,
+      agg.hashtags
+    FROM (agg_stats agg
+      JOIN json_country_edits jce ON (agg.country_id = jce.country_id)
+      JOIN countries ON agg.country_id = countries.id);
 
 CREATE UNIQUE INDEX country_statistics_id ON country_statistics(country_id);
