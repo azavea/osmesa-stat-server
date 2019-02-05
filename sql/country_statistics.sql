@@ -20,11 +20,17 @@ CREATE MATERIALIZED VIEW country_statistics AS
           user_id,
           sum(edit_count) AS edits
         FROM user_edits
+        WHERE user_id <> 0
         GROUP BY country_id, user_id
+    ), grouped_user_edits AS (
+      SELECT *,
+          ROW_NUMBER() OVER (PARTITION BY country_id ORDER BY edits DESC) as rank
+        FROM country_edits
     ), json_country_edits AS (
       SELECT country_id,
           json_agg(json_build_object('user', user_id, 'count', edits)) AS edits
-        FROM country_edits
+        FROM grouped_user_edits
+        WHERE rank <= 10
         GROUP BY country_id
     ), ht_edits AS (
       SELECT cc.id as country_id,
@@ -33,14 +39,18 @@ CREATE MATERIALIZED VIEW country_statistics AS
         FROM (country_counts cc
           JOIN hashtags hts ON cc.hashtag_id = hts.id)
         GROUP BY cc.id, hts.hashtag
+    ), grouped_hts AS (
+      SELECT *,
+          ROW_NUMBER() OVER (PARTITION BY country_id ORDER BY edit_count DESC) as rank
+        FROM ht_edits
     ), ht_json AS (
       SELECT country_id,
           json_agg(json_build_object('hashtag', hashtag, 'count', edit_count)) as hashtag_edits
-        FROM ht_edits
+        FROM grouped_hts
+        WHERE rank <= 10
         GROUP BY country_id
     ), agg_stats AS (
     SELECT cc.id as country_id,
-        array_agg(chg.id) AS changesets,
         sum(chg.road_km_added) AS road_km_added,
         sum(chg.road_km_modified) AS road_km_modified,
         sum(chg.waterway_km_added) AS waterway_km_added,
@@ -60,8 +70,7 @@ CREATE MATERIALIZED VIEW country_statistics AS
         max(coalesce(chg.closed_at, chg.created_at)) AS last_edit,
         max(COALESCE(chg.closed_at, chg.created_at, chg.updated_at)) AS updated_at,
         count(*) AS changeset_count,
-        sum(cc.edit_count) AS edit_count,
-        array_remove(array_agg(DISTINCT cc.hashtag_id), NULL) AS hashtags
+        sum(cc.edit_count) AS edit_count
       FROM (changesets chg
         JOIN country_counts cc ON ((cc.changeset_id = chg.id)))
       GROUP BY cc.id
