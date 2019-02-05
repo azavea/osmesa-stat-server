@@ -49,7 +49,9 @@ case class CountryStats(
   lastEdit: Option[java.sql.Timestamp],
   updatedAt: Option[java.sql.Timestamp],
   changesetCount: Option[Int],
-  editCount: Option[Int]
+  editCount: Option[Int],
+  userEdits: Json,
+  hashtagEdits: Json
 )
 
 object CountryStats {
@@ -62,19 +64,19 @@ object CountryStats {
         country_id, country_name, road_km_added, road_km_modified, waterway_km_added, waterway_km_modified,
         coastline_km_added, coastline_km_modified, roads_added, roads_modified, waterways_added, waterways_modified,
         coastlines_added, coastlines_modified, buildings_added, buildings_modified, pois_added, pois_modified,
-        last_edit, updated_at, changeset_count, edit_count
+        last_edit, updated_at, changeset_count, edit_count, user_edit_counts, hashtag_edits
       FROM
         country_statistics
     """
 
-  def byId(id: Long)(implicit xa: Transactor[IO]): IO[Either[OsmStatError, CountryStats]] =
-    (selectF ++ fr"WHERE country_id = $id")
+  def byId(code: String)(implicit xa: Transactor[IO]): IO[Either[OsmStatError, CountryStats]] =
+    (selectF ++ fr"WHERE country_code = $code")
       .query[CountryStats]
       .option
       .transact(xa)
       .map {
         case Some(country) => Right(country)
-        case None => Left(IdNotFoundError("country", id))
+        case None => Left(IdNotFoundError("country", code))
       }
 
   def getPage(pageNum: Int, pageSize: Int = 25)(implicit xa: Transactor[IO]): IO[ResultPage[CountryStats]] = {

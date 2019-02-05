@@ -78,7 +78,7 @@ class StatsRouter(trans: Transactor[IO]) extends Http4sDsl[IO] {
         country <- eitherResult(io)
       } yield country
 
-    case GET -> Root / "country-stats" / IntVar(countryId) =>
+    case GET -> Root / "country-stats" / countryId =>
       for {
         io <- CountryStats.byId(countryId)
         result <- eitherResult(io)
