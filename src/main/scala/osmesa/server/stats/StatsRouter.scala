@@ -78,6 +78,12 @@ class StatsRouter(trans: Transactor[IO]) extends Http4sDsl[IO] {
         country <- eitherResult(io)
       } yield country
 
+    case GET -> Root / "country-stats" / countryId =>
+      for {
+        io <- CountryStats.byId(countryId)
+        result <- eitherResult(io)
+      } yield result
+
     case GET -> Root / "changesets-countries" :? OptionalPageQueryParamMatcher(pageNum) =>
       Ok(ChangesetCountry.getPage(pageNum.getOrElse(0)).map(_.asJson))
 
