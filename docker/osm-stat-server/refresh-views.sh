@@ -26,3 +26,6 @@ if [ "$(psql -Aqtc "select count(pid) from pg_stat_activity where query ilike 'r
     -c "UPDATE refreshments SET updated_at=now() where mat_view='country_statistics'" \
     $DATABASE_URL &
 fi
+
+wait
+echo "$(date --iso-8601=seconds): Completed"
