@@ -5,4 +5,4 @@ version: 1
 task_definition:
   services:
     stats-server:
-      mem_reservation: 2048m
+      mem_reservation: 1024m
