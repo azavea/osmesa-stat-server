@@ -92,5 +92,11 @@ class StatsRouter(trans: Transactor[IO]) extends Http4sDsl[IO] {
         io <- ChangesetCountry.byId(changesetId, countryId)
         changesetCountry <- eitherResult(io)
       } yield changesetCountry
+
+    case GET -> Root / "status" =>
+      for {
+        io <- RefreshStats.getCurrentStatus
+        result <- eitherResult(Right(io))
+      } yield result
   }
 }
