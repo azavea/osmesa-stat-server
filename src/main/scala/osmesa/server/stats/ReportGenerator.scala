@@ -49,22 +49,4 @@ object ReportGenerator {
     prog.transact(xa).map{ num => new String(bao.toByteArray, java.nio.charset.StandardCharsets.UTF_8) }
   }
 
-  // def byId(id: Long)(implicit xa: Transactor[IO]): IO[Either[OsmStatError, UserStats]] =
-  //   (selectF ++ fr"WHERE id = $id")
-  //     .query[UserStats]
-  //     .option
-  //     .transact(xa)
-  //     .map {
-  //       case Some(user) => Right(user)
-  //       case None => Left(IdNotFoundError("user", id))
-  //     }
-
-  // def getPage(pageNum: Int, pageSize: Int = 25)(implicit xa: Transactor[IO]): IO[ResultPage[UserStats]] = {
-  //   val offset = pageNum * pageSize + 1
-  //   (selectF ++ fr"ORDER BY id ASC LIMIT $pageSize OFFSET $offset")
-  //     .query[UserStats]
-  //     .to[List]
-  //     .map({ ResultPage(_, pageNum) })
-  //     .transact(xa)
-  // }
 }
