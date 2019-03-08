@@ -98,5 +98,11 @@ class StatsRouter(trans: Transactor[IO]) extends Http4sDsl[IO] {
         io <- RefreshStats.getCurrentStatus
         result <- eitherResult(Right(io))
       } yield result
+
+    case GET -> Root / "report" =>
+      for {
+        report <- ReportGenerator()
+        result <- Ok(report)
+      } yield result
   }
 }
