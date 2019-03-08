@@ -37,7 +37,10 @@ object ReportGenerator {
   private val copyCmd = """
     COPY (
       SELECT
-        id, name, road_km_added, road_km_modified, waterway_km_added, waterway_km_modified, coastline_km_added, coastline_km_modified, roads_added, roads_modified, waterways_added, waterways_modified, coastlines_added, coastlines_modified, buildings_added, buildings_modified, pois_added, pois_modified, last_edit, edit_count
+        id, name, road_km_added, road_km_modified, road_km_deleted, waterway_km_added, waterway_km_modified, waterway_km_deleted,
+        coastline_km_added, coastline_km_modified, coastline_km_deleted, roads_added, roads_modified, roads_deleted,
+        waterways_added, waterways_modified, waterways_deleted, coastlines_added, coastlines_modified, coastlines_deleted,
+        buildings_added, buildings_modified, buildings_deleted, pois_added, pois_modified, pois_deleted, last_edit, edit_count
       FROM
         user_statistics
     ) TO stdout ( encoding 'utf-8', format csv, header )
