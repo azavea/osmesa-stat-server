@@ -34,19 +34,89 @@ CREATE MATERIALIZED VIEW hashtag_statistics AS
         ch.hashtag_id
       FROM (changesets chg
         JOIN changesets_hashtags ch ON ((ch.changeset_id = chg.id)))
-    ), hashtag_usr_counts AS (
-    SELECT hashtag_join.hashtag_id,
-        users.id AS uid,
+    ), tag_usr_counts AS (
+    SELECT hj.hashtag_id,
         array_agg(DISTINCT users.name) AS names,
+        users.id AS uid,
         count(*) AS edit_count
       FROM (users
-        JOIN hashtag_join ON ((hashtag_join.user_id = users.id)))
-      GROUP BY hashtag_join.hashtag_id, users.id
+        JOIN hashtag_join hj ON ((hj.user_id = users.id)))
+      WHERE users.id <> 0
+      GROUP BY hj.hashtag_id, users.id
+    ), rank_tag_usrs AS (
+    SELECT hashtag_id,
+      uid,
+      edit_count,
+      unnest(names) as names,
+      ROW_NUMBER() OVER (PARTITION BY hashtag_id ORDER BY edit_count DESC) as rank
+      FROM tag_usr_counts
+    ), ranked_users AS (
+    SELECT *
+      FROM rank_tag_usrs
+      WHERE rank <= 10
+    ), hashtag_usr_counts AS (
+    SELECT hj.hashtag_id,
+        users.uid AS uid,
+        array_agg(DISTINCT users.names) AS names,
+        sum(hj.road_km_added) as road_km_added,
+        sum(hj.road_km_modified) as road_km_modified,
+        sum(hj.road_km_deleted) as road_km_deleted,
+        sum(hj.waterway_km_added) as waterway_km_added,
+        sum(hj.waterway_km_modified) as waterway_km_modified,
+        sum(hj.waterway_km_deleted) as waterway_km_deleted,
+        sum(hj.coastline_km_added) as coastline_km_added,
+        sum(hj.coastline_km_modified) as coastline_km_modified,
+        sum(hj.coastline_km_deleted) as coastline_km_deleted,
+        sum(hj.roads_added) as roads_added,
+        sum(hj.roads_modified) as roads_modified,
+        sum(hj.roads_deleted) as roads_deleted,
+        sum(hj.waterways_added) as waterways_added,
+        sum(hj.waterways_modified) as waterways_modified,
+        sum(hj.waterways_deleted) as waterways_deleted,
+        sum(hj.coastlines_added) as coastlines_added,
+        sum(hj.coastlines_modified) as coastlines_modified,
+        sum(hj.coastlines_deleted) as coastlines_deleted,
+        sum(hj.buildings_added) as buildings_added,
+        sum(hj.buildings_modified) as buildings_modified,
+        sum(hj.buildings_deleted) as buildings_deleted,
+        sum(hj.pois_added) as pois_added,
+        sum(hj.pois_modified) as pois_modified,
+        sum(hj.pois_deleted) as pois_deleted,
+        count(*) AS edit_count
+      FROM (ranked_users users
+        JOIN hashtag_join hj ON ((hj.user_id = users.uid AND hj.hashtag_id = users.hashtag_id)))
+      GROUP BY hj.hashtag_id, users.uid
     ), usr_json_agg AS (
-    SELECT hashtag_usr_counts.hashtag_id,
-        json_agg(json_build_object('name', hashtag_usr_counts.names[1], 'uid', hashtag_usr_counts.uid, 'edits', hashtag_usr_counts.edit_count)) AS users
-      FROM hashtag_usr_counts
-      GROUP BY hashtag_usr_counts.hashtag_id
+    SELECT usr_counts.hashtag_id,
+        json_agg(json_build_object('name', usr_counts.names[1],
+                                   'uid', usr_counts.uid,
+                                   'road_km_added', usr_counts.road_km_added,
+                                   'road_km_modified', usr_counts.road_km_modified,
+                                   'road_km_deleted', usr_counts.road_km_deleted,
+                                   'waterway_km_added', usr_counts.waterway_km_added,
+                                   'waterway_km_modified', usr_counts.waterway_km_modified,
+                                   'waterway_km_deleted', usr_counts.waterway_km_deleted,
+                                   'coastline_km_added', usr_counts.coastline_km_added,
+                                   'coastline_km_modified', usr_counts.coastline_km_modified,
+                                   'coastline_km_deleted', usr_counts.coastline_km_deleted,
+                                   'roads_added', usr_counts.roads_added,
+                                   'roads_modified', usr_counts.roads_modified,
+                                   'roads_deleted', usr_counts.roads_deleted,
+                                   'waterways_added', usr_counts.waterways_added,
+                                   'waterways_modified', usr_counts.waterways_modified,
+                                   'waterways_deleted', usr_counts.waterways_deleted,
+                                   'coastlines_added', usr_counts.coastlines_added,
+                                   'coastlines_modified', usr_counts.coastlines_modified,
+                                   'coastlines_deleted', usr_counts.coastlines_deleted,
+                                   'buildings_added', usr_counts.buildings_added,
+                                   'buildings_modified', usr_counts.buildings_modified,
+                                   'buildings_deleted', usr_counts.buildings_deleted,
+                                   'pois_added', usr_counts.pois_added,
+                                   'pois_modified', usr_counts.pois_modified,
+                                   'pois_deleted', usr_counts.pois_deleted,
+                                   'edits', usr_counts.edit_count)) AS users
+      FROM hashtag_usr_counts usr_counts
+      GROUP BY usr_counts.hashtag_id
     ), without_json AS (
     SELECT ht.hashtag AS tag,
         ht.id AS hashtag_id,
