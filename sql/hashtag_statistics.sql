@@ -43,17 +43,6 @@ CREATE MATERIALIZED VIEW hashtag_statistics AS
         JOIN hashtag_join hj ON ((hj.user_id = users.id)))
       WHERE users.id <> 0
       GROUP BY hj.hashtag_id, users.id
-    ), rank_tag_usrs AS (
-    SELECT hashtag_id,
-      uid,
-      edit_count,
-      unnest(names) as names,
-      ROW_NUMBER() OVER (PARTITION BY hashtag_id ORDER BY edit_count DESC) as rank
-      FROM tag_usr_counts
-    ), ranked_users AS (
-    SELECT *
-      FROM rank_tag_usrs
-      WHERE rank <= 10
     ), hashtag_usr_counts AS (
     SELECT hj.hashtag_id,
         users.uid AS uid,
@@ -83,7 +72,7 @@ CREATE MATERIALIZED VIEW hashtag_statistics AS
         sum(hj.pois_modified) as pois_modified,
         sum(hj.pois_deleted) as pois_deleted,
         count(*) AS edit_count
-      FROM (ranked_users users
+      FROM (tag_usr_counts users
         JOIN hashtag_join hj ON ((hj.user_id = users.uid AND hj.hashtag_id = users.hashtag_id)))
       GROUP BY hj.hashtag_id, users.uid
     ), usr_json_agg AS (
