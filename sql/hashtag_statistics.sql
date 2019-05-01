@@ -43,10 +43,13 @@ CREATE MATERIALIZED VIEW hashtag_statistics AS
         JOIN hashtag_join hj ON ((hj.user_id = users.id)))
       WHERE users.id <> 0
       GROUP BY hj.hashtag_id, users.id
+    ), named_usr_counts AS (
+    SELECT *, unnest(names) as name
+    FROM tag_usr_counts
     ), hashtag_usr_counts AS (
     SELECT hj.hashtag_id,
         users.uid AS uid,
-        array_agg(DISTINCT users.names) AS names,
+        array_agg(DISTINCT users.name) AS names,
         sum(hj.road_km_added) as road_km_added,
         sum(hj.road_km_modified) as road_km_modified,
         sum(hj.road_km_deleted) as road_km_deleted,
@@ -72,7 +75,7 @@ CREATE MATERIALIZED VIEW hashtag_statistics AS
         sum(hj.pois_modified) as pois_modified,
         sum(hj.pois_deleted) as pois_deleted,
         count(*) AS edit_count
-      FROM (tag_usr_counts users
+      FROM (named_usr_counts users
         JOIN hashtag_join hj ON ((hj.user_id = users.uid AND hj.hashtag_id = users.hashtag_id)))
       GROUP BY hj.hashtag_id, users.uid
     ), usr_json_agg AS (
