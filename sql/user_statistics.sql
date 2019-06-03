@@ -1,4 +1,4 @@
-CREATE MATERIALIZED VIEW user_statistics AS
+CREATE MATERIALIZED VIEW tmp_user_statistics AS
   WITH country_counts AS (
     SELECT cc.changeset_id,
         countries.name,
@@ -8,13 +8,16 @@ CREATE MATERIALIZED VIEW user_statistics AS
     ), chgset_country_counts AS (
     SELECT chg.user_id,
         country_counts.name,
-        sum(country_counts.edit_count) AS edit_count
+        sum(country_counts.edit_count) AS edit_count,
+        count(*) AS changeset_count
       FROM (country_counts
         JOIN changesets chg ON ((country_counts.changeset_id = chg.id)))
       GROUP BY chg.user_id, country_counts.name
     ), usr_country_counts AS (
     SELECT chgset_country_counts.user_id,
-        json_agg(json_build_object('name', chgset_country_counts.name, 'count', chgset_country_counts.edit_count)) AS country_json
+        json_agg(json_build_object('name', chgset_country_counts.name,
+                                   'edit_count', chgset_country_counts.edit_count,
+                                   'changeset_count', chgset_country_counts.changeset_count)) AS country_json
       FROM chgset_country_counts
       GROUP BY chgset_country_counts.user_id
     ), day_counts AS (
@@ -140,4 +143,4 @@ CREATE MATERIALIZED VIEW user_statistics AS
       LEFT JOIN usr_day_counts ON ((agg_stats.id = usr_day_counts.user_id)))
       LEFT JOIN usr_editor_counts ON ((agg_stats.id = usr_editor_counts.user_id)));
 
-CREATE UNIQUE INDEX user_statistics_id ON user_statistics(id);
+CREATE UNIQUE INDEX tmp_user_statistics_id ON tmp_user_statistics(id);
