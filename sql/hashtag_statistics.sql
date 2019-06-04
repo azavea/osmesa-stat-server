@@ -38,8 +38,7 @@ CREATE MATERIALIZED VIEW tmp_hashtag_statistics AS
     ), tag_usr_counts AS (
     SELECT hj.hashtag_id,
         array_agg(DISTINCT users.name) AS names,
-        users.id AS uid,
-        count(*) AS changeset_count
+        users.id AS uid
       FROM (users
         JOIN hashtag_join hj ON ((hj.user_id = users.id)))
       WHERE users.id <> 0
@@ -76,7 +75,7 @@ CREATE MATERIALIZED VIEW tmp_hashtag_statistics AS
         sum(hj.pois_modified) as pois_modified,
         sum(hj.pois_deleted) as pois_deleted,
         sum(hj.edit_count) AS edit_count,
-        sum(users.changeset_count) AS changeset_count
+        count(*) AS changeset_count
       FROM (named_usr_counts users
         JOIN hashtag_join hj ON ((hj.user_id = users.uid AND hj.hashtag_id = users.hashtag_id)))
       GROUP BY hj.hashtag_id, users.uid

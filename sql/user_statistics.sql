@@ -94,7 +94,7 @@ CREATE MATERIALIZED VIEW tmp_user_statistics AS
         sum(chg.pois_deleted) AS pois_deleted,
         max(coalesce(chg.closed_at, chg.created_at)) AS last_edit,
         count(*) AS changeset_count,
-        count(*) AS edit_count,
+        sum(chg.roads_added + chg.roads_modified + chg.roads_deleted + chg.waterways_added + chg.waterways_modified + chg.waterways_deleted + chg.coastlines_added + chg.coastlines_modified + chg.coastlines_deleted + chg.buildings_added + chg.buildings_modified + chg.buildings_deleted + chg.pois_added + chg.pois_modified + chg.pois_deleted) as edit_count,
         max(COALESCE(chg.closed_at, chg.created_at, chg.updated_at)) AS updated_at
       FROM (changesets chg
         JOIN users usr ON ((chg.user_id = usr.id)))

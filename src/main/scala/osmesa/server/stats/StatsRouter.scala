@@ -47,6 +47,15 @@ class StatsRouter(trans: Transactor[IO]) extends Http4sDsl[IO] {
         userRes <- eitherResult(io)
       } yield userRes
 
+    case GET -> Root / "_users" :? OptionalPageQueryParamMatcher(pageNum) =>
+      Ok(UserStats._getPage(pageNum.getOrElse(0)).map(_.asJson))
+
+    case GET -> Root / "_users" / IntVar(userId) =>
+      for {
+        io <- UserStats._byId(userId)
+        userRes <- eitherResult(io)
+      } yield userRes
+
     // Too many results. The data will get where it needs to go (streamed, chunked response) but the client might well crash
     case GET -> Root / "changesets" :? OptionalPageQueryParamMatcher(pageNum) =>
       Ok(Changeset.getPage(pageNum.getOrElse(0)).map(_.asJson))
@@ -66,6 +75,18 @@ class StatsRouter(trans: Transactor[IO]) extends Http4sDsl[IO] {
     case GET -> Root / "campaigns" / hashtag =>
       for {
         io <- HashtagStats.byTag(hashtag)
+        result <- eitherResult(io)
+      } yield result
+
+    case GET -> Root / "_campaigns" :? OptionalPageQueryParamMatcher(pageNum) =>
+      for {
+        io <- HashtagStats._getPage(pageNum.getOrElse(0))
+        res <- eitherResult(io)
+      } yield res
+
+    case GET -> Root / "_campaigns" / hashtag =>
+      for {
+        io <- HashtagStats._byTag(hashtag)
         result <- eitherResult(io)
       } yield result
 
