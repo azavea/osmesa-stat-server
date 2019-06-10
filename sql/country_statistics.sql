@@ -1,117 +1,140 @@
 CREATE MATERIALIZED VIEW country_statistics AS
-  WITH country_counts AS (
-    -- Collect country-related changesets with edit counts and associate with hashtags
-    SELECT cc.changeset_id,
-        countries.id,
-        countries.code,
-        countries.name AS country_name,
-        cc.edit_count,
-        hts.hashtag_id
-      FROM ((changesets_countries cc
-        JOIN countries ON ((cc.country_id = countries.id)))
-        FULL OUTER JOIN changesets_hashtags hts ON (hts.changeset_id = cc.changeset_id))
-    ), user_edits AS (
-      -- Associate user ids with changesets/edit count
-      SELECT c_chg.country_id,
-          c_chg.edit_count,
-          c.user_id
-        FROM (changesets_countries c_chg
-          JOIN changesets c ON (c.id = c_chg.changeset_id))
-    ), country_edits AS (
-      -- Aggregate edit counts per user (ignore UID 0)
-      SELECT country_id,
-          user_id,
-          sum(edit_count) AS edits
-        FROM user_edits
-        WHERE user_id <> 0
-        GROUP BY country_id, user_id
-    ), grouped_user_edits AS (
-      -- Rank user edit totals per country
-      SELECT *,
-          ROW_NUMBER() OVER (PARTITION BY country_id ORDER BY edits DESC) as rank
-        FROM country_edits
-    ), json_country_edits AS (
-      -- Collapse top ten user edit totals into JSON object
-      SELECT country_id,
-          json_agg(json_build_object('user', user_id, 'count', edits)) AS edits
-        FROM grouped_user_edits
-        WHERE rank <= 10
-        GROUP BY country_id
-    ), ht_edits AS (
-      -- Associate hashtags with aggregate edit counts per country
-      SELECT cc.id as country_id,
-          hts.hashtag,
-          sum(edit_count) as edit_count
-        FROM (country_counts cc
-          JOIN hashtags hts ON cc.hashtag_id = hts.id)
-        GROUP BY cc.id, hts.hashtag
-    ), grouped_hts AS (
-      -- Rank edit counts per country
-      SELECT *,
-          ROW_NUMBER() OVER (PARTITION BY country_id ORDER BY edit_count DESC) as rank
-        FROM ht_edits
-    ), ht_json AS (
-      -- Collapse top ten most active hashtags per country into JSON object
-      SELECT country_id,
-          json_agg(json_build_object('hashtag', hashtag, 'count', edit_count)) as hashtag_edits
-        FROM grouped_hts
-        WHERE rank <= 10
-        GROUP BY country_id
-    ), agg_stats AS (
-      -- Aggregate statistics per country
-      SELECT cc.id as country_id,
-          sum(chg.road_km_added) AS road_km_added,
-          sum(chg.road_km_modified + chg.road_km_deleted) AS road_km_modified,
-          sum(chg.waterway_km_added) AS waterway_km_added,
-          sum(chg.waterway_km_modified + chg.waterway_km_deleted) AS waterway_km_modified,
-          sum(chg.coastline_km_added) AS coastline_km_added,
-          sum(chg.coastline_km_modified + chg.coastline_km_deleted) AS coastline_km_modified,
-          sum(chg.roads_added) AS roads_added,
-          sum(chg.roads_modified + chg.roads_deleted) AS roads_modified,
-          sum(chg.waterways_added) AS waterways_added,
-          sum(chg.waterways_modified + chg.waterways_deleted) AS waterways_modified,
-          sum(chg.coastlines_added) AS coastlines_added,
-          sum(chg.coastlines_modified + chg.coastlines_deleted) AS coastlines_modified,
-          sum(chg.buildings_added) AS buildings_added,
-          sum(chg.buildings_modified + chg.buildings_deleted) AS buildings_modified,
-          sum(chg.pois_added) AS pois_added,
-          sum(chg.pois_modified + chg.pois_deleted) AS pois_modified,
-          max(coalesce(chg.closed_at, chg.created_at)) AS last_edit,
-          max(COALESCE(chg.closed_at, chg.created_at, chg.updated_at)) AS updated_at,
-          count(*) AS changeset_count,
-          sum(cc.edit_count) AS edit_count
-        FROM (changesets chg
-          JOIN country_counts cc ON ((cc.changeset_id = chg.id)))
-        GROUP BY cc.id
-    )
-  SELECT agg.country_id,
-      countries.name AS country_name,
-      countries.code AS country_code,
-      agg.road_km_added,
-      agg.road_km_modified,
-      agg.waterway_km_added,
-      agg.waterway_km_modified,
-      agg.coastline_km_added,
-      agg.coastline_km_modified,
-      agg.roads_added,
-      agg.roads_modified,
-      agg.waterways_added,
-      agg.waterways_modified,
-      agg.coastlines_added,
-      agg.coastlines_modified,
-      agg.buildings_added,
-      agg.buildings_modified,
-      agg.pois_added,
-      agg.pois_modified,
-      agg.last_edit,
-      agg.updated_at,
-      agg.changeset_count,
-      agg.edit_count,
-      jce.edits AS user_edit_counts,
-      hts.hashtag_edits
-    FROM (agg_stats agg
-      FULL OUTER JOIN json_country_edits jce ON (agg.country_id = jce.country_id)
-      FULL OUTER JOIN ht_json hts ON (agg.country_id = hts.country_id)
-      JOIN countries ON agg.country_id = countries.id);
+  WITH changesets AS (
+    SELECT
+      *
+    FROM changesets
+    -- ignore users 0 and 1
+    WHERE user_id > 1
+  ),
+  general AS (
+    SELECT
+      country_id,
+      max(coalesce(closed_at, created_at)) last_edit,
+      count(*) changeset_count,
+      sum(edit_count) edit_count,
+      max(updated_at) updated_at
+    FROM changesets
+    JOIN changesets_countries ON changesets.id = changesets_countries.changeset_id
+    GROUP BY country_id
+  ),
+  processed_changesets AS (
+    SELECT
+      -- TODO include changesets_countries.edit_count as an alternative to changeset count
+      id,
+      user_id,
+      country_id,
+      measurements,
+      counts
+    FROM changesets
+    JOIN changesets_countries ON changesets.id = changesets_countries.changeset_id
+  ),
+  hashtag_counts AS (
+    SELECT
+      -- TODO rank by edit count?
+      RANK() OVER (PARTITION BY country_id ORDER BY count(*) DESC) AS rank,
+      country_id,
+      hashtag,
+      -- TODO expose edit count instead?
+      count(*) changesets
+    FROM processed_changesets
+    JOIN changesets_hashtags ON processed_changesets.id = changesets_hashtags.changeset_id
+    JOIN hashtags ON changesets_hashtags.hashtag_id = hashtags.id
+    GROUP BY country_id, hashtag
+  ),
+  hashtags AS (
+    SELECT
+      country_id,
+      json_object_agg(hashtag, changesets) hashtags
+    FROM hashtag_counts
+    WHERE rank <= 10
+    GROUP BY country_id
+  ),
+  user_counts AS (
+    SELECT
+      -- TODO rank by edit count?
+      RANK() OVER (PARTITION BY country_id ORDER BY count(*) DESC) AS rank,
+      country_id,
+      user_id,
+      -- TODO expose edit count instead?
+      count(*) changesets
+    FROM processed_changesets
+    GROUP BY country_id, user_id
+  ),
+  users AS (
+    SELECT
+      country_id,
+      json_object_agg(user_id, changesets) users
+    FROM user_counts
+    WHERE rank <= 10
+    GROUP BY country_id
+  ),
+  measurements AS (
+    SELECT
+      id,
+      country_id,
+      key,
+      value
+    FROM processed_changesets
+    CROSS JOIN LATERAL jsonb_each(measurements)
+  ),
+  aggregated_measurements_kv AS (
+    SELECT
+      country_id,
+      key,
+      sum(value::numeric) AS value
+    FROM measurements
+    GROUP BY country_id, key
+  ),
+  aggregated_measurements AS (
+    SELECT
+      country_id,
+      json_object_agg(key, value) measurements
+    FROM aggregated_measurements_kv
+    GROUP BY country_id
+  ),
+  counts AS (
+    SELECT
+      id,
+      country_id,
+      key,
+      value
+    FROM processed_changesets
+    CROSS JOIN LATERAL jsonb_each(counts)
+  ),
+  aggregated_counts_kv AS (
+    SELECT
+      country_id,
+      key,
+      sum(value::numeric) AS value
+    FROM counts
+    GROUP BY country_id, key
+  ),
+  aggregated_counts AS (
+    SELECT
+      country_id,
+      json_object_agg(key, value) counts
+    FROM aggregated_counts_kv
+    GROUP BY country_id
+  )
+  SELECT
+    general.country_id,
+    countries.name country_name,
+    countries.code country_code,
+    -- NOTE these are per-changeset, not per-country, so stats are double-counted
+    measurements,
+    -- NOTE these are per-changeset, not per-country, so stats are double-counted
+    counts,
+    general.changeset_count,
+    general.edit_count,
+    general.last_edit,
+    general.updated_at,
+    users user_edit_counts,
+    hashtags hashtag_edits
+  FROM general
+  JOIN countries ON country_id = countries.id
+  LEFT OUTER JOIN users USING (country_id)
+  LEFT OUTER JOIN hashtags USING (country_id)
+  LEFT OUTER JOIN aggregated_measurements USING (country_id)
+  LEFT OUTER JOIN aggregated_counts USING (country_id);
 
 CREATE UNIQUE INDEX country_statistics_id ON country_statistics(country_code);
