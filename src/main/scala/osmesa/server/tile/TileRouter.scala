@@ -40,10 +40,8 @@ class TileRouter(tileConf: Config.Tiles) extends Http4sDsl[IO] {
 
       getBytes
         .flatMap {
-          case Right(bytes) if tileConf.gzipped =>
-            Ok(bytes, `Content-Encoding`(ContentCoding.gzip))
           case Right(bytes) =>
-            Ok(bytes)
+            Ok(bytes, `Content-Encoding`(ContentCoding.gzip))
           case Left(s3e: AmazonS3Exception)
               if s3e.getStatusCode == 403 || s3e.getStatusCode == 404 =>
             Ok(emptyVT.toBytes)
@@ -62,10 +60,8 @@ class TileRouter(tileConf: Config.Tiles) extends Http4sDsl[IO] {
 
       getBytes
         .flatMap {
-          case Right(bytes) if tileConf.gzipped =>
-            Ok(bytes, `Content-Encoding`(ContentCoding.gzip))
           case Right(bytes) =>
-            Ok(bytes)
+            Ok(bytes, `Content-Encoding`(ContentCoding.gzip))
           case Left(s3e: AmazonS3Exception)
               if s3e.getStatusCode == 403 || s3e.getStatusCode == 404 =>
             Ok(emptyVT.toBytes)

@@ -30,6 +30,5 @@ object Config {
   case class Tiles(s3bucket: String,
                    s3prefix: String,
                    s3suffix: Option[String],
-                   chunkSize: Int,
-                   gzipped: Boolean)
+                   chunkSize: Int)
 }
