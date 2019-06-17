@@ -127,8 +127,6 @@ CREATE MATERIALIZED VIEW user_statistics AS
     user_id AS id,
     users.name,
     'user/' || users.id || '/{z}/{x}/{y}.mvt' AS extent_uri,
-    -- TODO this is unbounded; drop it?
-    changesets,
     measurements,
     counts,
     last_edit,

@@ -90,7 +90,6 @@ CREATE MATERIALIZED VIEW hashtag_statistics AS
   SELECT
     hashtags.hashtag tag,
     general.hashtag_id,
-    'hashtag/' || general.hashtag_id || '/{z}/{x}/{y}.mvt' AS extent_uri,
     measurements,
     counts,
     general.changeset_count,
