@@ -1,25 +1,16 @@
 package osmesa.server
 
-import osmesa.server.model._
-import osmesa.server.stats._
-import osmesa.server.tile._
-
 import cats.effect._
-import doobie.Transactor
-import io.circe._
-import io.circe.syntax._
-import fs2._
 import fs2.StreamApp.ExitCode
-import org.http4s.circe._
+import fs2._
 import org.http4s._
-import org.http4s.server.blaze.BlazeBuilder
 import org.http4s.server.HttpMiddleware
-import org.http4s.server.middleware.{GZip, CORS, CORSConfig}
-import org.http4s.headers.{Location, `Content-Type`}
+import org.http4s.server.blaze.BlazeBuilder
+import org.http4s.server.middleware.{CORS, CORSConfig}
+import osmesa.server.tile._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
-
 
 object Server extends StreamApp[IO] {
 
@@ -31,24 +22,24 @@ object Server extends StreamApp[IO] {
     maxAge = 1.day.toSeconds
   )
 
-  private val middleware: HttpMiddleware[IO] = { (routes: HttpService[IO]) =>
-    CORS(routes)
+  private val middleware: HttpMiddleware[IO] = { routes: HttpService[IO] =>
+    CORS(routes, corsConfig)
   }
 
-  def stream(args: List[String], requestShutdown: IO[Unit]): Stream[IO, ExitCode] = {
+  def stream(args: List[String],
+             requestShutdown: IO[Unit]): Stream[IO, ExitCode] = {
     for {
-      config     <- Stream.eval(Config.load())
+      config <- Stream.eval(Config.load())
       transactor <- Stream.eval(Database.transactor(config.database))
       //_        <- Stream.eval(Database.initialize(transactor))
-      stats = middleware(new StatsRouter(transactor).routes)
+      default = middleware(new DefaultRouter(transactor).routes)
       tiles = middleware(new TileRouter(config.tiles).routes)
-      exitCode   <- BlazeBuilder[IO]
+      exitCode <- BlazeBuilder[IO]
         .enableHttp2(true)
         .bindHttp(config.server.port, config.server.host)
-        .mountService(stats, "/")
+        .mountService(default, "/")
         .mountService(tiles, "/tiles")
         .serve
     } yield exitCode
   }
 }
-

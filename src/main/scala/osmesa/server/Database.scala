@@ -7,7 +7,12 @@ import org.flywaydb.core.Flyway
 object Database {
 
   def transactor(dbconfig: Config.Database): IO[HikariTransactor[IO]] = {
-    HikariTransactor.newHikariTransactor[IO](dbconfig.driver, dbconfig.url, dbconfig.user, dbconfig.password)
+    HikariTransactor.newHikariTransactor[IO](
+      dbconfig.driver,
+      dbconfig.url,
+      dbconfig.user,
+      dbconfig.password
+    )
   }
 
   def initialize(transactor: HikariTransactor[IO]): IO[Unit] = {
