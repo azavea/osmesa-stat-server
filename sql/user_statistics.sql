@@ -23,7 +23,7 @@ CREATE MATERIALIZED VIEW user_statistics AS
   countries AS (
     SELECT
       user_id,
-      json_object_agg(code, changesets) countries
+      jsonb_object_agg(code, changesets) countries
     FROM country_counts
     GROUP BY user_id
   ),
@@ -38,7 +38,7 @@ CREATE MATERIALIZED VIEW user_statistics AS
   edit_times AS (
     SELECT
       user_id,
-      json_object_agg(day, changesets) edit_times
+      jsonb_object_agg(day, changesets) edit_times
     FROM edit_time_counts
     GROUP BY user_id
   ),
@@ -54,7 +54,7 @@ CREATE MATERIALIZED VIEW user_statistics AS
   editors AS (
     SELECT
       user_id,
-      json_object_agg(editor, changesets) editors
+      jsonb_object_agg(editor, changesets) editors
     FROM editor_counts
     GROUP BY user_id
   ),
@@ -71,7 +71,7 @@ CREATE MATERIALIZED VIEW user_statistics AS
   hashtags AS (
     SELECT
       user_id,
-      json_object_agg(hashtag, changesets) hashtags
+      jsonb_object_agg(hashtag, changesets) hashtags
     FROM hashtag_counts
     GROUP BY user_id
   ),
@@ -95,7 +95,7 @@ CREATE MATERIALIZED VIEW user_statistics AS
   aggregated_measurements AS (
     SELECT
       user_id,
-      json_object_agg(key, value) measurements
+      jsonb_object_agg(key, value) measurements
     FROM aggregated_measurements_kv
     GROUP BY user_id
   ),
@@ -119,7 +119,7 @@ CREATE MATERIALIZED VIEW user_statistics AS
   aggregated_counts AS (
     SELECT
       user_id,
-      json_object_agg(key, value) counts
+      jsonb_object_agg(key, value) counts
     FROM aggregated_counts_kv
     GROUP BY user_id
   )

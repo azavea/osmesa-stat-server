@@ -44,7 +44,7 @@ CREATE MATERIALIZED VIEW country_statistics AS
   hashtags AS (
     SELECT
       country_id,
-      json_object_agg(hashtag, changesets) hashtags
+      jsonb_object_agg(hashtag, changesets) hashtags
     FROM hashtag_counts
     WHERE rank <= 10
     GROUP BY country_id
@@ -63,7 +63,7 @@ CREATE MATERIALIZED VIEW country_statistics AS
   users AS (
     SELECT
       country_id,
-      json_object_agg(user_id, changesets) users
+      jsonb_object_agg(user_id, changesets) users
     FROM user_counts
     WHERE rank <= 10
     GROUP BY country_id
@@ -88,7 +88,7 @@ CREATE MATERIALIZED VIEW country_statistics AS
   aggregated_measurements AS (
     SELECT
       country_id,
-      json_object_agg(key, value) measurements
+      jsonb_object_agg(key, value) measurements
     FROM aggregated_measurements_kv
     GROUP BY country_id
   ),
@@ -112,7 +112,7 @@ CREATE MATERIALIZED VIEW country_statistics AS
   aggregated_counts AS (
     SELECT
       country_id,
-      json_object_agg(key, value) counts
+      jsonb_object_agg(key, value) counts
     FROM aggregated_counts_kv
     GROUP BY country_id
   )

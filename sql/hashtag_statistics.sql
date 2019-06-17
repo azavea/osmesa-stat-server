@@ -34,7 +34,7 @@ CREATE MATERIALIZED VIEW hashtag_statistics AS
   users AS (
     SELECT
       hashtag_id,
-      json_object_agg(user_id, changesets) users
+      jsonb_object_agg(user_id, changesets) users
     FROM user_counts
     WHERE rank <= 10
     GROUP BY hashtag_id
@@ -59,7 +59,7 @@ CREATE MATERIALIZED VIEW hashtag_statistics AS
   aggregated_measurements AS (
     SELECT
       hashtag_id,
-      json_object_agg(key, value) measurements
+      jsonb_object_agg(key, value) measurements
     FROM aggregated_measurements_kv
     GROUP BY hashtag_id
   ),
@@ -83,7 +83,7 @@ CREATE MATERIALIZED VIEW hashtag_statistics AS
   aggregated_counts AS (
     SELECT
       hashtag_id,
-      json_object_agg(key, value) counts
+      jsonb_object_agg(key, value) counts
     FROM aggregated_counts_kv
     GROUP BY hashtag_id
   )
