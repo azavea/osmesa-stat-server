@@ -108,5 +108,4 @@ object HashtagStats {
         case Left(err) => Left(UnknownError(err.toString))
       }
   }
-
 }

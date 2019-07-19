@@ -128,5 +128,4 @@ object UserStats {
       .map({ ResultPage(_, pageNum) })
       .transact(xa)
   }
-
 }
