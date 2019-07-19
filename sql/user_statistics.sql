@@ -1,4 +1,4 @@
-CREATE MATERIALIZED VIEW tmp_user_statistics AS
+CREATE MATERIALIZED VIEW user_statistics AS
   WITH country_counts AS (
     SELECT cc.changeset_id,
         countries.name,
@@ -143,4 +143,4 @@ CREATE MATERIALIZED VIEW tmp_user_statistics AS
       LEFT JOIN usr_day_counts ON ((agg_stats.id = usr_day_counts.user_id)))
       LEFT JOIN usr_editor_counts ON ((agg_stats.id = usr_editor_counts.user_id)));
 
-CREATE UNIQUE INDEX tmp_user_statistics_id ON tmp_user_statistics(id);
+CREATE UNIQUE INDEX user_statistics_id ON user_statistics(id);

@@ -109,42 +109,4 @@ object HashtagStats {
       }
   }
 
-  private val _selectF = fr"""
-      SELECT
-        tag, extent_uri, buildings_added, buildings_modified,
-        roads_added, road_km_added, roads_modified, road_km_modified,
-        waterways_added, waterway_km_added, waterways_modified,
-        waterway_km_modified, coastlines_added, coastline_km_added,
-        coastlines_modified, coastline_km_modified, pois_added,
-        pois_modified, users
-      FROM
-        tmp_hashtag_statistics
-    """
-
-  def _byTag(tag: String)(implicit xa: Transactor[IO]): IO[Either[OsmStatError, HashtagStats]] =
-    (_selectF ++ fr"WHERE tag = $tag")
-      .query[HashtagStats]
-      .option
-      .attempt
-      .transact(xa)
-      .map {
-        case Right(hashtagOrNone) => hashtagOrNone match {
-          case Some(ht) => Right(ht)
-          case None => Left(IdNotFoundError("tmp_hashtag_statistics", tag))
-        }
-        case Left(err) => Left(UnknownError(err.toString))
-      }
-
-  def _getPage(pageNum: Int)(implicit xa: Transactor[IO]): IO[Either[OsmStatError, ResultPage[HashtagStats]]] = {
-    val offset = pageNum * 10 + 1
-    (_selectF ++ fr"ORDER BY tag ASC LIMIT 10 OFFSET $offset")
-      .query[HashtagStats]
-      .to[List]
-      .attempt
-      .transact(xa)
-      .map {
-        case Right(results) => Right(ResultPage(results, pageNum))
-        case Left(err) => Left(UnknownError(err.toString))
-      }
-  }
-  }
+}

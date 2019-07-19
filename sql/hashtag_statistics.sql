@@ -1,4 +1,4 @@
-CREATE MATERIALIZED VIEW tmp_hashtag_statistics AS
+CREATE MATERIALIZED VIEW hashtag_statistics AS
   WITH hashtag_join AS (
     SELECT chg.id,
         chg.road_km_added,
@@ -158,4 +158,4 @@ CREATE MATERIALIZED VIEW tmp_hashtag_statistics AS
     FROM (without_json
       JOIN usr_json_agg ON ((without_json.hashtag_id = usr_json_agg.hashtag_id)));
 
-CREATE UNIQUE INDEX tmp_hashtag_statistics_hashtag_id ON tmp_hashtag_statistics(hashtag_id);
+CREATE UNIQUE INDEX hashtag_statistics_hashtag_id ON hashtag_statistics(hashtag_id);
