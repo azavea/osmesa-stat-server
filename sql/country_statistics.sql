@@ -57,6 +57,8 @@ CREATE MATERIALIZED VIEW country_statistics AS
         FROM grouped_hts
         WHERE rank <= 10
         GROUP BY country_id
+    ), excluded_changesets AS (
+      SELECT * FROM changesets where user_id <> 0
     ), agg_stats AS (
       -- Aggregate statistics per country
       SELECT cc.id as country_id,
@@ -80,7 +82,7 @@ CREATE MATERIALIZED VIEW country_statistics AS
           max(COALESCE(chg.closed_at, chg.created_at, chg.updated_at)) AS updated_at,
           count(*) AS changeset_count,
           sum(cc.edit_count) AS edit_count
-        FROM (changesets chg
+        FROM (excluded_changesets chg
           JOIN country_counts cc ON ((cc.changeset_id = chg.id)))
         GROUP BY cc.id
     )
