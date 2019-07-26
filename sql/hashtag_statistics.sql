@@ -41,7 +41,7 @@ CREATE MATERIALIZED VIEW hashtag_statistics AS
         users.id AS uid
       FROM (users
         JOIN hashtag_join hj ON ((hj.user_id = users.id)))
-      WHERE users.id <> 0
+      WHERE users.id <> 0 and users.id <> 1
       GROUP BY hj.hashtag_id, users.id
     ), named_usr_counts AS (
     SELECT *, unnest(names) as name

@@ -23,7 +23,7 @@ CREATE MATERIALIZED VIEW country_statistics AS
           user_id,
           sum(edit_count) AS edits
         FROM user_edits
-        WHERE user_id <> 0
+        WHERE user_id <> 0 and user_id <> 1
         GROUP BY country_id, user_id
     ), grouped_user_edits AS (
       -- Rank user edit totals per country
@@ -58,7 +58,7 @@ CREATE MATERIALIZED VIEW country_statistics AS
         WHERE rank <= 10
         GROUP BY country_id
     ), excluded_changesets AS (
-      SELECT * FROM changesets where user_id <> 0
+      SELECT * FROM changesets where user_id <> 0 and user_id <> 1
     ), agg_stats AS (
       -- Aggregate statistics per country
       SELECT cc.id as country_id,
