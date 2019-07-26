@@ -8,13 +8,16 @@ CREATE MATERIALIZED VIEW user_statistics AS
     ), chgset_country_counts AS (
     SELECT chg.user_id,
         country_counts.name,
-        sum(country_counts.edit_count) AS edit_count
+        sum(country_counts.edit_count) AS edit_count,
+        count(*) AS changeset_count
       FROM (country_counts
         JOIN changesets chg ON ((country_counts.changeset_id = chg.id)))
       GROUP BY chg.user_id, country_counts.name
     ), usr_country_counts AS (
     SELECT chgset_country_counts.user_id,
-        json_agg(json_build_object('name', chgset_country_counts.name, 'count', chgset_country_counts.edit_count)) AS country_json
+        json_agg(json_build_object('name', chgset_country_counts.name,
+                                   'edit_count', chgset_country_counts.edit_count,
+                                   'changeset_count', chgset_country_counts.changeset_count)) AS country_json
       FROM chgset_country_counts
       GROUP BY chgset_country_counts.user_id
     ), day_counts AS (
@@ -91,7 +94,7 @@ CREATE MATERIALIZED VIEW user_statistics AS
         sum(chg.pois_deleted) AS pois_deleted,
         max(coalesce(chg.closed_at, chg.created_at)) AS last_edit,
         count(*) AS changeset_count,
-        count(*) AS edit_count,
+        sum(chg.roads_added + chg.roads_modified + chg.roads_deleted + chg.waterways_added + chg.waterways_modified + chg.waterways_deleted + chg.coastlines_added + chg.coastlines_modified + chg.coastlines_deleted + chg.buildings_added + chg.buildings_modified + chg.buildings_deleted + chg.pois_added + chg.pois_modified + chg.pois_deleted) as edit_count,
         max(COALESCE(chg.closed_at, chg.created_at, chg.updated_at)) AS updated_at
       FROM (changesets chg
         JOIN users usr ON ((chg.user_id = usr.id)))

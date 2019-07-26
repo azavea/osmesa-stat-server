@@ -25,6 +25,7 @@ CREATE MATERIALIZED VIEW hashtag_statistics AS
         chg.pois_added,
         chg.pois_modified,
         chg.pois_deleted,
+        (chg.roads_added + chg.roads_modified + chg.roads_deleted + chg.waterways_added + chg.waterways_modified + chg.waterways_deleted + chg.coastlines_added + chg.coastlines_modified + chg.coastlines_deleted + chg.buildings_added + chg.buildings_modified + chg.buildings_deleted + chg.pois_added + chg.pois_modified + chg.pois_deleted) as edit_count,
         chg.editor,
         chg.user_id,
         chg.created_at,
@@ -37,11 +38,10 @@ CREATE MATERIALIZED VIEW hashtag_statistics AS
     ), tag_usr_counts AS (
     SELECT hj.hashtag_id,
         array_agg(DISTINCT users.name) AS names,
-        users.id AS uid,
-        count(*) AS edit_count
+        users.id AS uid
       FROM (users
         JOIN hashtag_join hj ON ((hj.user_id = users.id)))
-      WHERE users.id <> 0
+      WHERE users.id <> 0 and users.id <> 1
       GROUP BY hj.hashtag_id, users.id
     ), named_usr_counts AS (
     SELECT *, unnest(names) as name
@@ -74,7 +74,8 @@ CREATE MATERIALIZED VIEW hashtag_statistics AS
         sum(hj.pois_added) as pois_added,
         sum(hj.pois_modified) as pois_modified,
         sum(hj.pois_deleted) as pois_deleted,
-        count(*) AS edit_count
+        sum(hj.edit_count) AS edit_count,
+        count(*) AS changeset_count
       FROM (named_usr_counts users
         JOIN hashtag_join hj ON ((hj.user_id = users.uid AND hj.hashtag_id = users.hashtag_id)))
       GROUP BY hj.hashtag_id, users.uid
@@ -106,7 +107,8 @@ CREATE MATERIALIZED VIEW hashtag_statistics AS
                                    'poi_add', usr_counts.pois_added,
                                    'poi_mod', usr_counts.pois_modified,
                                    'poi_del', usr_counts.pois_deleted,
-                                   'edits', usr_counts.edit_count)) AS users
+                                   'changeset_count', usr_counts.changeset_count,
+                                   'edit_count', usr_counts.edit_count)) AS users
       FROM hashtag_usr_counts usr_counts
       GROUP BY usr_counts.hashtag_id
     ), without_json AS (
