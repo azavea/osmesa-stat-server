@@ -1,3 +1,4 @@
+DROP MATERIALIZED VIEW IF EXISTS country_statistics;
 CREATE MATERIALIZED VIEW country_statistics AS
   WITH changesets AS (
     SELECT
@@ -11,7 +12,7 @@ CREATE MATERIALIZED VIEW country_statistics AS
       country_id,
       max(coalesce(closed_at, created_at)) last_edit,
       count(*) changeset_count,
-      sum(edit_count) edit_count,
+      sum(coalesce(edit_count, 0)) edit_count,
       max(updated_at) updated_at
     FROM changesets
     JOIN changesets_countries ON changesets.id = changesets_countries.changeset_id
@@ -19,23 +20,22 @@ CREATE MATERIALIZED VIEW country_statistics AS
   ),
   processed_changesets AS (
     SELECT
-      -- TODO include changesets_countries.edit_count as an alternative to changeset count
       id,
       user_id,
       country_id,
       measurements,
-      counts
+      counts,
+      edit_count
     FROM changesets
     JOIN changesets_countries ON changesets.id = changesets_countries.changeset_id
   ),
   hashtag_counts AS (
     SELECT
-      -- TODO rank by edit count?
-      RANK() OVER (PARTITION BY country_id ORDER BY count(*) DESC) AS rank,
+      RANK() OVER (PARTITION BY country_id ORDER BY sum(coalesce(edit_count, 0)) DESC) AS rank,
       country_id,
       hashtag,
-      -- TODO expose edit count instead?
-      count(*) changesets
+      count(*) changesets,
+      sum(coalesce(edit_count, 0)) edits
     FROM processed_changesets
     JOIN changesets_hashtags ON processed_changesets.id = changesets_hashtags.changeset_id
     JOIN hashtags ON changesets_hashtags.hashtag_id = hashtags.id
@@ -44,26 +44,27 @@ CREATE MATERIALIZED VIEW country_statistics AS
   hashtags AS (
     SELECT
       country_id,
-      jsonb_object_agg(hashtag, changesets) hashtags
+      jsonb_object_agg(hashtag, changesets) hashtag_changesets,
+      jsonb_object_agg(hashtag, edits) hashtag_edits
     FROM hashtag_counts
     WHERE rank <= 10
     GROUP BY country_id
   ),
   user_counts AS (
     SELECT
-      -- TODO rank by edit count?
-      RANK() OVER (PARTITION BY country_id ORDER BY count(*) DESC) AS rank,
+      RANK() OVER (PARTITION BY country_id ORDER BY sum(coalesce(edit_count, 0)) DESC) AS rank,
       country_id,
       user_id,
-      -- TODO expose edit count instead?
-      count(*) changesets
+      count(*) changesets,
+      sum(coalesce(edit_count, 0)) edits
     FROM processed_changesets
     GROUP BY country_id, user_id
   ),
   users AS (
     SELECT
       country_id,
-      jsonb_object_agg(user_id, changesets) users
+      jsonb_object_agg(user_id, changesets) user_changesets,
+      jsonb_object_agg(user_id, edits) user_edits
     FROM user_counts
     WHERE rank <= 10
     GROUP BY country_id
@@ -128,8 +129,10 @@ CREATE MATERIALIZED VIEW country_statistics AS
     general.edit_count,
     general.last_edit,
     general.updated_at,
-    users user_edit_counts,
-    hashtags hashtag_edits
+    user_changesets,
+    user_edits,
+    hashtag_changesets,
+    hashtag_edits
   FROM general
   JOIN countries ON country_id = countries.id
   LEFT OUTER JOIN users USING (country_id)
@@ -137,4 +140,4 @@ CREATE MATERIALIZED VIEW country_statistics AS
   LEFT OUTER JOIN aggregated_measurements USING (country_id)
   LEFT OUTER JOIN aggregated_counts USING (country_id);
 
-CREATE UNIQUE INDEX country_statistics_id ON country_statistics(country_code);
+CREATE UNIQUE INDEX IF NOT EXISTS country_statistics_id ON country_statistics(country_code);
