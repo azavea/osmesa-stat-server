@@ -82,7 +82,7 @@ CREATE MATERIALIZED VIEW country_statistics AS
     SELECT
       country_id,
       key,
-      sum(value::numeric) AS value
+      sum((value->>0)::numeric) AS value
     FROM measurements
     GROUP BY country_id, key
   ),
@@ -106,7 +106,7 @@ CREATE MATERIALIZED VIEW country_statistics AS
     SELECT
       country_id,
       key,
-      sum(value::numeric) AS value
+      sum((value->>0)::numeric) AS value
     FROM counts
     GROUP BY country_id, key
   ),

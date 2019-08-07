@@ -54,7 +54,7 @@ CREATE MATERIALIZED VIEW hashtag_statistics AS
     SELECT
       hashtag_id,
       key,
-      sum(value::numeric) AS value
+      sum((value->>0)::numeric) AS value
     FROM measurements
     GROUP BY hashtag_id, key
   ),
@@ -78,7 +78,7 @@ CREATE MATERIALIZED VIEW hashtag_statistics AS
     SELECT
       hashtag_id,
       key,
-      sum(value::numeric) AS value
+      sum((value->>0)::numeric) AS value
     FROM counts
     GROUP BY hashtag_id, key
   ),

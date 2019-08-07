@@ -101,7 +101,7 @@ CREATE MATERIALIZED VIEW user_statistics AS
     SELECT
       user_id,
       key,
-      sum(value::numeric) AS value
+      sum((value->>0)::numeric) AS value
     FROM measurements
     GROUP BY user_id, key
   ),
@@ -125,7 +125,7 @@ CREATE MATERIALIZED VIEW user_statistics AS
     SELECT
       user_id,
       key,
-      sum(value::numeric) AS value
+      sum((value->>0)::numeric) AS value
     FROM counts
     GROUP BY user_id, key
   ),
