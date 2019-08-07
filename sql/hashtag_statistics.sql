@@ -1,10 +1,11 @@
+DROP MATERIALIZED VIEW IF EXISTS hashtag_statistics;
 CREATE MATERIALIZED VIEW hashtag_statistics AS
   WITH general AS (
     SELECT
       hashtag_id,
       max(coalesce(closed_at, created_at)) last_edit,
       count(*) changeset_count,
-      sum(total_edits) edit_count,
+      sum(coalesce(total_edits, 0)) edit_count,
       max(updated_at) updated_at
     FROM changesets
     JOIN changesets_hashtags ON changesets.id = changesets_hashtags.changeset_id
@@ -16,25 +17,26 @@ CREATE MATERIALIZED VIEW hashtag_statistics AS
       user_id,
       hashtag_id,
       measurements,
-      counts
+      counts,
+      total_edits
     FROM changesets
     JOIN changesets_hashtags ON changesets.id = changesets_hashtags.changeset_id
   ),
   user_counts AS (
     SELECT
-      -- TODO rank by edit count?
-      RANK() OVER (PARTITION BY hashtag_id ORDER BY count(*) DESC) AS rank,
+      RANK() OVER (PARTITION BY hashtag_id ORDER BY sum(coalesce(total_edits, 0)) DESC) AS rank,
       hashtag_id,
       user_id,
-      -- TODO expose edit count instead?
-      count(*) changesets
+      count(*) changesets,
+      sum(coalesce(total_edits, 0)) edit_count
     FROM processed_changesets
     GROUP BY hashtag_id, user_id
   ),
   users AS (
     SELECT
       hashtag_id,
-      jsonb_object_agg(user_id, changesets) users
+      jsonb_object_agg(user_id, changesets) user_changesets,
+      jsonb_object_agg(user_id, edit_count) user_edits
     FROM user_counts
     WHERE rank <= 10
     GROUP BY hashtag_id
@@ -96,11 +98,12 @@ CREATE MATERIALIZED VIEW hashtag_statistics AS
     general.edit_count,
     general.last_edit,
     general.updated_at,
-    users
+    user_changesets,
+    user_edits
   FROM general
   JOIN hashtags ON hashtag_id = hashtags.id
   LEFT OUTER JOIN users USING (hashtag_id)
   LEFT OUTER JOIN aggregated_measurements USING (hashtag_id)
   LEFT OUTER JOIN aggregated_counts USING (hashtag_id);
 
-CREATE UNIQUE INDEX hashtag_statistics_hashtag_id ON hashtag_statistics(hashtag_id);
+CREATE UNIQUE INDEX IF NOT EXISTS hashtag_statistics_hashtag_id ON hashtag_statistics(hashtag_id);
