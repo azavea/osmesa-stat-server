@@ -1,3 +1,4 @@
+DROP MATERIALIZED VIEW IF EXISTS user_statistics;
 CREATE MATERIALIZED VIEW user_statistics AS
   WITH general AS (
     SELECT
@@ -5,7 +6,7 @@ CREATE MATERIALIZED VIEW user_statistics AS
       array_agg(id) changesets,
       max(coalesce(closed_at, created_at)) last_edit,
       count(*) changeset_count,
-      sum(total_edits) edit_count,
+      sum(coalesce(total_edits, 0)) edit_count,
       max(updated_at) updated_at
     FROM changesets
     GROUP BY user_id
@@ -14,7 +15,8 @@ CREATE MATERIALIZED VIEW user_statistics AS
     SELECT
       user_id,
       code,
-      count(*) changesets
+      count(*) changesets,
+      sum(coalesce(total_edits, 0)) edits
     FROM changesets
     JOIN changesets_countries ON changesets.id = changesets_countries.changeset_id
     JOIN countries ON changesets_countries.country_id = countries.id
@@ -23,30 +25,35 @@ CREATE MATERIALIZED VIEW user_statistics AS
   countries AS (
     SELECT
       user_id,
-      jsonb_object_agg(code, changesets) countries
+      jsonb_object_agg(code, changesets) country_changesets,
+      jsonb_object_agg(code, edits) country_edits
     FROM country_counts
     GROUP BY user_id
   ),
-  edit_time_counts AS (
+  edit_day_counts AS (
     SELECT
       user_id,
       date_trunc('day', coalesce(closed_at, created_at))::date AS day,
-      count(*) changesets
+      count(*) changesets,
+      sum(coalesce(total_edits, 0)) edits
     FROM changesets
     GROUP BY user_id, day
   ),
-  edit_times AS (
+  edit_days AS (
     SELECT
       user_id,
-      jsonb_object_agg(day, changesets) edit_times
-    FROM edit_time_counts
+      jsonb_object_agg(day, changesets) day_changesets,
+      jsonb_object_agg(day, edits) day_edits
+    FROM edit_day_counts
     GROUP BY user_id
   ),
   editor_counts AS (
     SELECT
+      RANK() OVER (PARTITION BY user_id ORDER BY sum(coalesce(total_edits, 0)) DESC) AS rank,
       user_id,
       editor,
-      count(*) changesets
+      count(*) changesets,
+      sum(coalesce(total_edits, 0)) edits
     FROM changesets
     WHERE editor IS NOT NULL
     GROUP BY user_id, editor
@@ -54,15 +61,19 @@ CREATE MATERIALIZED VIEW user_statistics AS
   editors AS (
     SELECT
       user_id,
-      jsonb_object_agg(editor, changesets) editors
+      jsonb_object_agg(editor, changesets) editor_changesets,
+      jsonb_object_agg(editor, edits) editor_edits
     FROM editor_counts
+    WHERE rank <= 10
     GROUP BY user_id
   ),
   hashtag_counts AS (
     SELECT
+      RANK() OVER (PARTITION BY user_id ORDER BY sum(coalesce(total_edits, 0)) DESC) AS rank,
       user_id,
       hashtag,
-      count(*) changesets
+      count(*) changesets,
+      sum(coalesce(total_edits)) edits
     FROM changesets
     JOIN changesets_hashtags ON changesets.id = changesets_hashtags.changeset_id
     JOIN hashtags ON changesets_hashtags.hashtag_id = hashtags.id
@@ -71,8 +82,10 @@ CREATE MATERIALIZED VIEW user_statistics AS
   hashtags AS (
     SELECT
       user_id,
-      jsonb_object_agg(hashtag, changesets) hashtags
+      jsonb_object_agg(hashtag, changesets) hashtag_changesets,
+      jsonb_object_agg(hashtag, edits) hashtag_edits
     FROM hashtag_counts
+    WHERE rank <= 50
     GROUP BY user_id
   ),
   measurements AS (
@@ -126,27 +139,27 @@ CREATE MATERIALIZED VIEW user_statistics AS
   SELECT
     user_id AS id,
     users.name,
-    'user/' || users.id || '/{z}/{x}/{y}.mvt' AS extent_uri,
     measurements,
     counts,
     last_edit,
     changeset_count,
     edit_count,
-    -- TODO this is unbounded; top N?
-    editors,
-    edit_times,
-    -- TODO top N?
-    countries,
-    -- TODO top N?
-    hashtags,
+    editor_changesets,
+    editor_edits,
+    day_changesets,
+    day_edits,
+    country_changesets,
+    country_edits,
+    hashtag_changesets,
+    hashtag_edits,
     updated_at
   FROM general
   LEFT OUTER JOIN countries USING (user_id)
   LEFT OUTER JOIN editors USING (user_id)
-  LEFT OUTER JOIN edit_times USING (user_id)
+  LEFT OUTER JOIN edit_days USING (user_id)
   LEFT OUTER JOIN hashtags USING (user_id)
   LEFT OUTER JOIN aggregated_measurements USING (user_id)
   LEFT OUTER JOIN aggregated_counts USING (user_id)
   JOIN users ON user_id = users.id;
 
-CREATE UNIQUE INDEX user_statistics_id ON user_statistics(id);
+CREATE UNIQUE INDEX IF NOT EXISTS user_statistics_id ON user_statistics(id);
