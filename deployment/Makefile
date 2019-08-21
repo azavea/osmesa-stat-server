@@ -37,7 +37,7 @@ push-image: login-aws-registry tag-image
 # Streaming AWS Tasks #
 #######################
 
-.PHONY: create-log-groups define-production-tasks define-staging-tasks deploy-stat-server
+.PHONY: create-log-groups define-production-tasks define-staging-tasks stop-stat-server deploy-stat-server
 
 create-log-groups:
 	./scripts/create-log-groups.sh
@@ -48,7 +48,10 @@ define-staging-tasks:
 define-production-tasks:
 	./scripts/define-production-tasks.sh
 
-deploy-stat-server:
+stop-stat-server:
+	./scripts/stop-stat-server.sh
+
+deploy-stat-server: stop-stat-server
 	aws ecs create-service \
 	  --cluster "${ECS_CLUSTER}" \
 	  --service-name "osmesa-stats-server" \
