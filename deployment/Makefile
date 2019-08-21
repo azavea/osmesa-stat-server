@@ -22,16 +22,16 @@ DB_URI=${DB_BASE_URI}/${DATABASE}
 .PHONY: login-aws-registry tag-image push-image
 
 build-container:
-	make -C .. build
+	./build-container.sh
 
 login-aws-registry:
 	eval `aws ecr get-login --no-include-email --region ${AWS_REGION}`
 
 tag-image: build-container
-	docker tag ${LOCAL_IMG} ${ECR_REPO}
+	docker tag osm_stat_server:${VERSION_TAG} ${ECR_IMAGE}:${VERSION_TAG}
 
 push-image: login-aws-registry tag-image
-	docker push ${ECR_REPO}
+	docker push ${ECR_IMAGE}:${VERSION_TAG}
 
 #######################
 # Streaming AWS Tasks #
