@@ -1,71 +1,59 @@
-include config-aws.mk  # Variables for AWS options
+include config-deployment.mk
 
-# The osmesa container
-LOCAL_IMG := quay.io/geotrellis/osm-stat-server:latest
+# If the user is on master branch, see if we should deploy to production
+VERSION_TAG=$(shell ./scripts/get-tag.sh)
+ifeq ($(VERSION_TAG), production)
+	DATABASE=${PRODUCTION_DB}
+	ECS_CLUSTER=${CLUSTER_NAME_DEPLOYMENT}
+	TASK_SUFFIX=
+else
+	DATABASE=${STAGING_DB}
+	ECS_CLUSTER=${CLUSTER_NAME_STAGING}
+	TASK_SUFFIX=-staging
+endif
+DB_URI=${DB_BASE_URI}/${DATABASE}
 
+.EXPORT_ALL_VARIABLES:
 
-#########
-#  AWS  #
-#########
+#############################
+#  Docker image management  #
+#############################
+
+.PHONY: login-aws-registry tag-image push-image
+
+build-container:
+	make -C .. build
 
 login-aws-registry:
 	eval `aws ecr get-login --no-include-email --region ${AWS_REGION}`
 
-tag-image:
+tag-image: build-container
 	docker tag ${LOCAL_IMG} ${ECR_REPO}
 
 push-image: login-aws-registry tag-image
 	docker push ${ECR_REPO}
 
-.PHONY: docker-compose.deploy.yml
+#######################
+# Streaming AWS Tasks #
+#######################
 
-docker-compose.deploy.yml:
-	./expand.sh docker-compose.deploy.yml.tpl > docker-compose.deploy.yml
+.PHONY: create-log-groups define-production-tasks define-staging-tasks deploy-stat-server
 
-configure-cluster:
-	ecs-cli configure \
-	  --cluster ${CLUSTER_NAME} \
-	  --region ${AWS_REGION} \
-	  --config-name ${CONFIG_NAME}
+create-log-groups:
+	./scripts/create-log-groups.sh
 
-cluster-up:
-	ecs-cli up \
-	  --keypair ${KEYPAIR} \
-	  --instance-role ${INSTANCE_ROLE} \
-	  --size 1 \
-	  --instance-type ${INSTANCE_TYPE} \
-	  --cluster-config ${CONFIG_NAME} \
-	  --subnets ${SUBNETS} \
-	  --vpc ${VPC} \
-	  --force \
-	  --verbose
+define-staging-tasks:
+	./scripts/define-staging-tasks.sh
 
-cluster-down:
-	ecs-cli down --cluster-config ${CONFIG_NAME}
+define-production-tasks:
+	./scripts/define-production-tasks.sh
 
-.PHONY: create-service
-
-create-service: docker-compose.deploy.yml configure-cluster
-	ecs-cli compose \
-	  --file $< create \
-	  --cluster ${CLUSTER_NAME}
-
-start-service: docker-compose.deploy.yml configure-cluster create-service
-	ecs-cli compose --file $< service up \
-	  --deployment-min-healthy-percent 0 \
-	  --create-log-groups \
-	  --cluster ${CLUSTER_NAME}
-
-stop-service:
-	ecs-cli compose down
-
-
-#########
-#  ALL  #
-#########
-build-image:
-	make -C .. build
-
-clean:
-	rm -f docker-compose.deploy.yml
-
+deploy-stat-server:
+	aws ecs create-service \
+	  --cluster "${ECS_CLUSTER}" \
+	  --service-name "osmesa-stats-server" \
+	  --task-definition "osmesa-stat-server${TASK_SUFFIX}" \
+	  --desired-count 1 \
+	  --launch-type FARGATE \
+	  --scheduling-strategy REPLICA \
+	  --network-configuration ${NETWORK_CONFIGURATION}
