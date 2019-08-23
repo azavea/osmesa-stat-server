@@ -20,7 +20,9 @@ case class CountryStats(countryId: Long,
                         updatedAt: Option[Instant],
                         changesetCount: Option[Int],
                         editCount: Option[Int],
+                        userChangesets: Json,
                         userEdits: Json,
+                        hashtagChangesets: Json,
                         hashtagEdits: Json)
 
 object CountryStats extends Implicits {
@@ -39,7 +41,9 @@ object CountryStats extends Implicits {
         updated_at,
         changeset_count,
         edit_count,
-        coalesce(user_edit_counts, '{}'::jsonb) user_edit_counts,
+        coalesce(user_changesets, '{}'::jsonb) user_changesets,
+        coalesce(user_edits, '{}'::jsonb) user_edits,
+        coalesce(hashtag_changesets, '{}'::jsonb) hashtag_changesets,
         coalesce(hashtag_edits, '{}'::jsonb) hashtag_edits
       FROM
         country_statistics
