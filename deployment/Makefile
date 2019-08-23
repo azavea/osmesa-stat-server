@@ -60,3 +60,6 @@ deploy-stat-server: stop-stat-server
 	  --launch-type FARGATE \
 	  --scheduling-strategy REPLICA \
 	  --network-configuration ${NETWORK_CONFIGURATION}
+
+deploy-stats-refresher:
+	./scripts/deploy-stats-refresher.sh
