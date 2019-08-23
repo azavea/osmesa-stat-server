@@ -19,6 +19,7 @@ if [[ $STATUS == "\"ACTIVE\"" ]]; then
         sleep 15s
         check_status
     done
+    echo "  final status: $STATUS"
 else
     echo "Status was $STATUS, nothing to stop"
 fi
