@@ -27,5 +27,14 @@ if [ "$(psql -Aqtc "select count(pid) from pg_stat_activity where query ilike 'r
     $DATABASE_URL &
 fi
 
+if [ "$(psql -Aqtc "select count(pid) from pg_stat_activity where query ilike 'refresh materialized view concurrently hashtag_user_statistics%' and state='active'" $DATABASE_URL 2> /dev/null)" == "0" ]; then
+  # refresh in the background to return immediately
+  echo "$(date --iso-8601=seconds): Refreshing hashtag/user statistics"
+  psql -Aqt \
+    -c "REFRESH MATERIALIZED VIEW CONCURRENTLY hashtag_user_statistics" \
+    -c "UPDATE refreshments SET updated_at=now() where mat_view='hashtag_user_statistics'" \
+    $DATABASE_URL &
+fi
+
 wait
 echo "$(date --iso-8601=seconds): Completed"
