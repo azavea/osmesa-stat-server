@@ -12,7 +12,8 @@ import osmesa.server.model._
 case class HashtagStats(tag: String,
                         measurements: Json,
                         counts: Json,
-                        users: Json)
+                        userChangesets: Json,
+                        userEdits: Json)
 
 object HashtagStats extends Implicits {
   implicit val userHashtagDecoder: Decoder[HashtagStats] = deriveDecoder
@@ -24,7 +25,8 @@ object HashtagStats extends Implicits {
         tag,
         coalesce(measurements, '{}'::jsonb) measurements,
         coalesce(counts, '{}'::jsonb) counts,
-        coalesce(users, '{}'::jsonb) users
+        coalesce(user_changesets, '{}'::jsonb) user_changesets,
+        coalesce(user_edits, '{}'::jsonb) user_edits
       FROM
         hashtag_statistics
     """

@@ -13,16 +13,19 @@ import osmesa.server.model.{IdNotFoundError, OsmStatError, ResultPage}
 
 case class UserStats(uid: Long,
                      name: Option[String],
-                     extentUri: Option[String],
                      measurements: Json,
                      counts: Json,
                      lastEdit: Option[Instant],
                      changesetCount: Option[Int],
                      editCount: Option[Int],
-                     editors: Json,
-                     editTimes: Json,
-                     countries: Json,
-                     hashtags: Json)
+                     editorChangesets: Json,
+                     editorEdits: Json,
+                     dayChangesets: Json,
+                     dayEdits: Json,
+                     countryChangesets: Json,
+                     countryEdits: Json,
+                     hashtagChangesets: Json,
+                     hashtagEdits: Json)
 
 object UserStats extends Implicits {
   implicit val userStatsDecoder: Decoder[UserStats] = deriveDecoder
@@ -33,16 +36,19 @@ object UserStats extends Implicits {
       SELECT
         id,
         name,
-        extent_uri,
         coalesce(measurements, '{}'::jsonb) measurements,
         coalesce(counts, '{}'::jsonb) counts,
         last_edit,
         changeset_count,
         edit_count,
-        coalesce(editors, '{}'::jsonb) editors,
-        coalesce(edit_times, '{}'::jsonb) edit_times,
-        coalesce(countries, '{}'::jsonb) countries,
-        coalesce(hashtags, '{}'::jsonb) hashtags
+        coalesce(editor_changesets, '{}'::jsonb) editor_changesets,
+        coalesce(editor_edits, '{}'::jsonb) editor_edits,
+        coalesce(day_changesets, '{}'::jsonb) day_changesets,
+        coalesce(day_edits, '{}'::jsonb) day_edits,
+        coalesce(country_changesets, '{}'::jsonb) country_changesets,
+        coalesce(country_edits, '{}'::jsonb) country_edits,
+        coalesce(hashtag_changesets, '{}'::jsonb) hashtag_changesets,
+        coalesce(hashtag_edits, '{}'::jsonb) hashtag_edits
       FROM
         user_statistics
     """
