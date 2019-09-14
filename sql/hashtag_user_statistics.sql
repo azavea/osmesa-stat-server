@@ -78,6 +78,7 @@ CREATE MATERIALIZED VIEW hashtag_user_statistics AS
     counts,
     last_edit,
     changeset_count,
+    edit_count,
     updated_at
   FROM general
   LEFT OUTER JOIN hashtags ON general.hashtag_id = hashtags.id
