@@ -16,8 +16,8 @@ case class HashtagStats(tag: String,
                         userEdits: Json)
 
 object HashtagStats extends Implicits {
-  implicit val userHashtagDecoder: Decoder[HashtagStats] = deriveDecoder
-  implicit val userHashtagEncoder: Encoder[HashtagStats] = deriveEncoder
+  implicit val hashtagDecoder: Decoder[HashtagStats] = deriveDecoder
+  implicit val hashtagEncoder: Encoder[HashtagStats] = deriveEncoder
 
   private val selectF =
     fr"""
