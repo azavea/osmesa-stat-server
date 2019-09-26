@@ -1,2 +1,1 @@
-config-aws.mk
-docker-compose.deploy.yml
+config-*.mk

@@ -37,6 +37,7 @@ CREATE MATERIALIZED VIEW user_statistics AS
       count(*) changesets,
       sum(coalesce(total_edits, 0)) edits
     FROM changesets
+    WHERE coalesce(closed_at, created_at) IS NOT NULL
     GROUP BY user_id, day
   ),
   edit_days AS (

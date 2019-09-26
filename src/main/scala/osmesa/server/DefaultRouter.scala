@@ -9,7 +9,7 @@ import org.http4s.circe._
 import org.http4s.dsl.Http4sDsl
 import org.http4s.headers.`Content-Type`
 import osmesa.server.model._
-import osmesa.server.stats.{CountryStats, HashtagStats, RefreshStats, UserStats}
+import osmesa.server.stats._
 
 class DefaultRouter(trans: Transactor[IO]) extends Http4sDsl[IO] {
 
@@ -45,6 +45,18 @@ class DefaultRouter(trans: Transactor[IO]) extends Http4sDsl[IO] {
     case GET -> Root / "campaigns" / hashtag =>
       for {
         io <- HashtagStats.byTag(hashtag)
+        result <- eitherResult(io)
+      } yield result
+
+    case GET -> Root / "campaigns" / hashtag / "users" :? OptionalPageQueryParamMatcher(pageNum) =>
+      for {
+        io <- HashtagUserStats.getPage(hashtag, pageNum.getOrElse(1))
+        result <- eitherResult(io)
+      } yield result
+
+    case GET -> Root / "campaigns" / hashtag / LongVar(uid) =>
+      for {
+        io <- HashtagUserStats.byTagAndUid(hashtag, uid)
         result <- eitherResult(io)
       } yield result
 
