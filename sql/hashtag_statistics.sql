@@ -1,6 +1,28 @@
 DROP MATERIALIZED VIEW IF EXISTS hashtag_statistics;
 CREATE MATERIALIZED VIEW hashtag_statistics AS
-  WITH general AS (
+  WITH totaledits AS (
+    SELECT
+      id,
+      coalesce(sum((t.v->>0)::numeric),0) as total_edits
+    FROM changesets, jsonb_each(counts) AS t(k,v)
+    GROUP BY id
+  ),
+  changesets AS (
+    SELECT
+        changesets.id,
+        changesets.measurements,
+        changesets.counts,
+        totaledits.total_edits as total_edits,
+        changesets.editor,
+        changesets.user_id,
+        changesets.created_at,
+        changesets.closed_at,
+        changesets.augmented_diffs,
+        changesets.updated_at
+    FROM changesets full outer join totaledits
+    ON changesets.id = totaledits.id
+  ),
+  general AS (
     SELECT
       hashtag_id,
       max(coalesce(closed_at, created_at)) last_edit,
