@@ -1,111 +1,76 @@
 package osmesa.server.stats
 
-import osmesa.server.model._
+import java.time.Instant
 
-import doobie._
-import doobie.implicits._
-import doobie.postgres._
-import doobie.postgres.implicits._
-import cats._
-import cats.data._
 import cats.effect._
 import cats.implicits._
+import doobie._
+import doobie.implicits._
 import io.circe._
-import io.circe.jawn._
-import io.circe.syntax._
-import io.circe.generic.extras.Configuration
 import io.circe.generic.extras.semiauto._
-import fs2._
-import org.postgresql.util.PGobject
+import io.circe.java8.time._
+import osmesa.server._
+import osmesa.server.model._
 
-import scala.concurrent.duration._
+case class HashtagStats(tag: String,
+                        measurements: Json,
+                        counts: Json,
+                        changesetCount: Option[Int],
+                        editCount: Option[Int],
+                        lastEdit: Option[Instant],
+                        updatedAt: Option[Instant],
+                        userChangesets: Json,
+                        userEdits: Json)
 
+object HashtagStats extends Implicits {
+  implicit val hashtagDecoder: Decoder[HashtagStats] = deriveDecoder
+  implicit val hashtagEncoder: Encoder[HashtagStats] = deriveEncoder
 
-case class HashtagStats(
-  tag: String,
-  extentUri: Option[String],
-  buildingsAdd: Option[Int],
-  buildingsMod: Option[Int],
-  roadsAdd: Option[Int],
-  kmRoadsAdd: Option[Double],
-  roadsMod: Option[Int],
-  kmRoadsMod: Option[Double],
-  waterwaysAdd: Option[Int],
-  kmWaterwaysAdd: Option[Double],
-  waterwaysMod: Option[Int],
-  kmWaterwaysMod: Option[Double],
-  coastlinesAdd: Option[Int],
-  kmCoastlinesAdd: Option[Double],
-  coastlinesMod: Option[Int],
-  kmCoastlinesMod: Option[Double],
-  poiAdd: Option[Int],
-  poiMod: Option[Int],
-  users: Json
-)
-
-/**
------------------------+------------------+-----------+----------+---------
- tag                   | text             |           |          |
- users                 | json             |           |          |
- extent_uri            | text             |           |          |
- buildings_added       | bigint           |           |          |
- buildings_modified    | bigint           |           |          |
- roads_added           | bigint           |           |          |
- road_km_added         | double precision |           |          |
- roads_modified        | bigint           |           |          |
- road_km_modified      | double precision |           |          |
- waterways_added       | bigint           |           |          |
- waterway_km_added     | double precision |           |          |
- waterways_modified    | bigint           |           |          |
- waterway_km_modified  | double precision |           |          |
- coastlines_added      | bigint           |           |          |
- coastline_km_added    | double precision |           |          |
- coastlines_modified   | bigint           |           |          |
- coastline_km_modified | double precision |           |          |
- pois_added            | bigint           |           |          |
- pois_modified         | bigint           |           |          |
- **/
-object HashtagStats {
-  implicit val customConfig: Configuration = Configuration.default.withSnakeCaseMemberNames.withDefaults
-  implicit val userHashtagDecoder: Decoder[HashtagStats] = deriveDecoder
-  implicit val userHashtagEncoder: Encoder[HashtagStats] = deriveEncoder
-
-  private val selectF = fr"""
+  private val selectF =
+    fr"""
       SELECT
-        tag, extent_uri, buildings_added, buildings_modified,
-        roads_added, road_km_added, roads_modified, road_km_modified,
-        waterways_added, waterway_km_added, waterways_modified,
-        waterway_km_modified, coastlines_added, coastline_km_added,
-        coastlines_modified, coastline_km_modified, pois_added,
-        pois_modified, users
+        tag,
+        coalesce(measurements, '{}'::jsonb) measurements,
+        coalesce(counts, '{}'::jsonb) counts,
+        changeset_count,
+        edit_count,
+        last_edit,
+        updated_at,
+        coalesce(user_changesets, '{}'::jsonb) user_changesets,
+        coalesce(user_edits, '{}'::jsonb) user_edits
       FROM
         hashtag_statistics
     """
 
-  def byTag(tag: String)(implicit xa: Transactor[IO]): IO[Either[OsmStatError, HashtagStats]] =
+  def byTag(
+    tag: String
+  )(implicit xa: Transactor[IO]): IO[Either[OsmStatError, HashtagStats]] =
     (selectF ++ fr"WHERE tag = $tag")
       .query[HashtagStats]
       .option
       .attempt
       .transact(xa)
       .map {
-        case Right(hashtagOrNone) => hashtagOrNone match {
-          case Some(ht) => Right(ht)
-          case None => Left(IdNotFoundError("hashtag_statistics", tag))
-        }
+        case Right(hashtagOrNone) =>
+          hashtagOrNone match {
+            case Some(ht) => Right(ht)
+            case None     => Left(IdNotFoundError("hashtag_statistics", tag))
+          }
         case Left(err) => Left(UnknownError(err.toString))
       }
 
-  def getPage(pageNum: Int)(implicit xa: Transactor[IO]): IO[Either[OsmStatError, ResultPage[HashtagStats]]] = {
-    val offset = pageNum * 10 + 1
-    (selectF ++ fr"ORDER BY tag ASC LIMIT 10 OFFSET $offset")
+  def getPage(pageNum: Int, pageSize: Int = 25)(
+    implicit xa: Transactor[IO]
+  ): IO[Either[OsmStatError, ResultPage[HashtagStats]]] = {
+    val offset = (pageNum - 1) * pageSize
+    (selectF ++ fr"ORDER BY tag ASC LIMIT $pageSize OFFSET $offset")
       .query[HashtagStats]
       .to[List]
       .attempt
       .transact(xa)
       .map {
         case Right(results) => Right(ResultPage(results, pageNum))
-        case Left(err) => Left(UnknownError(err.toString))
+        case Left(err)      => Left(UnknownError(err.toString))
       }
   }
 }
