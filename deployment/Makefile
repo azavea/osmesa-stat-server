@@ -1,7 +1,7 @@
 include config-deployment.mk
 
 # If the user is on master branch, see if we should deploy to production
-VERSION_TAG=$(shell ./scripts/get-tag.sh)
+VERSION_TAG:=$(shell ./scripts/get-tag.sh)
 ifeq ($(VERSION_TAG), production)
 	DATABASE=${PRODUCTION_DB}
 	ECS_CLUSTER=${CLUSTER_NAME_DEPLOYMENT}
@@ -63,3 +63,9 @@ deploy-stat-server: stop-stat-server
 
 deploy-stats-refresher:
 	./scripts/deploy-stats-refresher.sh
+
+disable-stats-refresher:
+	aws events disable-rule --name "osmesa-stats-view-refresher${TASK_SUFFIX}"
+
+enable-stats-refresher:
+	aws events enable-rule --name "osmesa-stats-view-refresher${TASK_SUFFIX}"
