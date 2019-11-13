@@ -18,7 +18,7 @@ aws ecs register-task-definition \
 	      \"logConfiguration\": {
 	        \"logDriver\": \"awslogs\",
 	        \"options\": {
-	          \"awslogs-group\": \"/ecs/${AWS_LOG_GROUP}\",
+	          \"awslogs-group\": \"/ecs/osmesa-stats-server${TASK_SUFFIX}\",
 	          \"awslogs-region\": \"${AWS_REGION}\",
 	          \"awslogs-stream-prefix\": \"ecs\"
 	        }
@@ -69,7 +69,7 @@ aws ecs register-task-definition \
 	          \"value\": \"${TILE_PREFIX}\"
                 }
 	      ],
-	      \"image\": \"${ECR_IMAGE}:latest\",
+	      \"image\": \"${ECR_IMAGE}:production\",
 	      \"name\": \"osmesa-stat-server\"
 	    }
 	  ]"
@@ -87,7 +87,7 @@ aws ecs register-task-definition \
               \"logConfiguration\": {
                 \"logDriver\": \"awslogs\",
                 \"options\": {
-	          \"awslogs-group\": \"/ecs/${AWS_LOG_GROUP}\",
+	          \"awslogs-group\": \"/ecs/osmesa-stats-server${TASK_SUFFIX}\",
 	          \"awslogs-region\": \"${AWS_REGION}\",
                   \"awslogs-stream-prefix\": \"ecs\"
                 }
@@ -99,9 +99,13 @@ aws ecs register-task-definition \
                 {
                   \"name\": \"DATABASE_URL\",
 	          \"value\": \"${DB_BASE_URI}/${PRODUCTION_DB}\"
+                },
+                {
+                  \"name\": \"DATABASE_NAME\",
+	          \"value\": \"${PRODUCTION_DB}\"
                 }
               ],
-	      \"image\": \"${ECR_IMAGE}:latest\",
+	      \"image\": \"${ECR_IMAGE}:production\",
               \"name\": \"stats-view-refresher\"
             }
           ]"
